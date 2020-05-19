@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -24,7 +24,6 @@ class Modules < BeEF::Extension::AdminUI::HttpController
         '/select/commandmodule.json'        => method(:select_command_module),
         '/select/command.json'              => method(:select_command),
         '/select/command_results.json'      => method(:select_command_results),
-        '/select/zombie_summary.json'       => method(:select_zombie_summary),
         '/commandmodule/commands.json'      => method(:select_command_module_commands),
         '/commandmodule/new'                => method(:attach_command_module),
         '/commandmodule/dynamicnew'         => method(:attach_dynamic_command_module),
@@ -44,132 +43,6 @@ class Modules < BeEF::Extension::AdminUI::HttpController
      @body = {
          'token' => BeEF::Core::Configuration.instance.get("beef.api_token")
      }.to_json
-  end
-
-  # Returns a JSON array containing the summary for a selected zombie.
-  def select_zombie_summary
-
-    # get the zombie
-    zombie_session = @params['zombie_session'] || nil
-    (print_error "Zombie session is nil";return) if zombie_session.nil?
-    zombie = BeEF::Core::Models::HookedBrowser.first(:session => zombie_session)
-    (print_error "Zombie is nil";return) if zombie.nil?
-
-    # init the summary grid
-    summary_grid_hash = {
-      'success' => 'true',
-      'results' => []
-    }
-
-    # zombie properties
-    # in the form of: category, UI label, value
-    zombie_properties = [
-
-        # Browser
-        ['Browser', 'Browser Name',       'BrowserName'],
-        ['Browser', 'Browser Version',    'BrowserVersion'],
-        ['Browser', 'Browser UA String',  'BrowserReportedName'],
-        ['Browser', 'Browser Language',   'BrowserLanguage'],
-        ['Browser', 'Browser Platform',   'BrowserPlatform'],
-        ['Browser', 'Browser Plugins',    'BrowserPlugins'],
-        ['Browser', 'Using Proxy',        'UsingProxy'],
-        ['Browser', 'Proxy Client',       'ProxyClient'],
-        ['Browser', 'Proxy Server',       'ProxyServer'],
-        ['Browser', 'Window Size',        'WindowSize'],
-
-        # Browser Components
-        ['Browser Components', 'Flash',              'HasFlash'],
-        ['Browser Components', 'Java',               'JavaEnabled'],
-        ['Browser Components', 'VBScript',           'VBScriptEnabled'],
-        ['Browser Components', 'PhoneGap',           'HasPhonegap'],
-        ['Browser Components', 'Google Gears',       'HasGoogleGears'],
-        ['Browser Components', 'Web Sockets',        'HasWebSocket'],
-        ['Browser Components', 'QuickTime',          'HasQuickTime'],
-        ['Browser Components', 'RealPlayer',         'HasRealPlayer'],
-        ['Browser Components', 'Windows Media Player','HasWMP'],
-        ['Browser Components', 'VLC',                'HasVLC'],
-        ['Browser Components', 'WebRTC',             'HasWebRTC'],
-        ['Browser Components', 'ActiveX',            'HasActiveX'],
-        ['Browser Components', 'Session Cookies',    'hasSessionCookies'],
-        ['Browser Components', 'Persistent Cookies', 'hasPersistentCookies'],
-
-        # Geolocation
-        ['Location', 'City',          'LocationCity'],
-        ['Location', 'Country',       'LocationCountry'],
-        ['Location', 'CountryCode2',  'LocationCountryCode2'],
-        ['Location', 'CountryCode3',  'LocationCountryCode3'],
-        ['Location', 'Continent',     'LocationContinentCode'],
-        ['Location', 'Post Code',     'LocationPostCode'],
-        ['Location', 'Latitude',      'LocationLatitude'],
-        ['Location', 'Longitude',     'LocationLongitude'],
-        ['Location', 'DMA Code',      'LocationDMACode'],
-        ['Location', 'Area Code',     'LocationAreaCode'],
-        ['Location', 'Timezone',      'LocationTimezone'],
-        ['Location', 'Region',        'LocationRegionName'],
-
-        # Hooked Page
-        ['Hooked Page', 'Page Title',    'PageTitle'],
-        ['Hooked Page', 'Page URI',      'PageURI'],
-        ['Hooked Page', 'Page Referrer', 'PageReferrer'],
-        ['Hooked Page', 'Host Name/IP',  'HostName'],
-        ['Hooked Page', 'Cookies',       'Cookies'],
-
-        # Host
-        ['Host', 'Host Name/IP',     'IP'],
-        ['Host', 'Date',             'DateStamp'],
-        ['Host', 'Operating System', 'OsName'],
-        ['Host', 'Hardware',         'Hardware'],
-        ['Host', 'CPU',              'CPU'],
-        ['Host', 'Default Browser',  'DefaultBrowser'],
-        ['Host', 'Screen Size',      'ScreenSize'],
-        ['Host', 'Touch Screen',     'TouchEnabled']
-    ]
-
-    # set and add the return values for each browser property
-    # in the form of: category, UI label, value
-    zombie_properties.each do |p|
-
-      case p[2]
-        when "BrowserName"
-          data   = BeEF::Core::Constants::Browsers.friendly_name(BD.get(zombie_session, p[2]))
-
-        when "ScreenSize"
-          screen_size = BD.get(zombie_session, "ScreenSize")
-          if screen_size.nil?
-            data = "Unknown"
-          else
-            screen_size_hash = JSON.parse(screen_size.gsub(/\"\=\>/, '":')) # tidy up the string for JSON
-            width  = screen_size_hash['width']
-            height = screen_size_hash['height']
-            cdepth = screen_size_hash['colordepth']
-            data   = "Width: #{width}, Height: #{height}, Colour Depth: #{cdepth}"
-          end
-        when "WindowSize"
-          window_size = BD.get(zombie_session, "WindowSize")
-          if window_size.nil?
-            data = "Unknown"
-          else
-            window_size_hash = JSON.parse(window_size.gsub(/\"\=\>/, '":')) # tidy up the string for JSON
-            width  = window_size_hash['width']
-            height = window_size_hash['height']
-            data   = "Width: #{width}, Height: #{height}"
-          end
-        else
-          data   = BD.get(zombie_session, p[2])
-      end
-
-      # add property to summary hash
-      if not data.nil?
-        summary_grid_hash['results'].push({
-          'category' => p[0],
-          'data'     => { p[1] => CGI.escapeHTML("#{data}") },
-          'from'     => 'Initialization'
-        })
-      end
-
-    end
-
-    @body = summary_grid_hash.to_json
   end
 
   # Returns the list of all command_modules in a JSON format
@@ -202,7 +75,11 @@ class Modules < BeEF::Extension::AdminUI::HttpController
       if hook_session_id == nil
           return BeEF::Core::Constants::CommandModule::VERIFIED_UNKNOWN
       end
-      return BeEF::Module.support(mod, {'browser' => BD.get(hook_session_id, 'BrowserName'), 'ver' => BD.get(hook_session_id, 'BrowserVersion'), 'os' => [BD.get(hook_session_id, 'OsName')]})
+      return BeEF::Module.support(mod, {
+        'browser' => BD.get(hook_session_id, 'browser.name'),
+        'ver' => BD.get(hook_session_id, 'browser.version'),
+        'os' => [BD.get(hook_session_id, 'host.os.name')]
+      })
   end
 
   # If we're adding a leaf to the command tree, and it's in a subfolder, we need to recurse
@@ -272,15 +149,13 @@ class Modules < BeEF::Extension::AdminUI::HttpController
      newinput = cinput.split('/')
      newcinput = newinput.shift
      if parent.detect {|p| p['text'] == newcinput }.nil?
-       fldr = {'text' => newcinput, 'cls' => 'folder', 'children' => []}
-       parent << build_recursive_tree(fldr['children'],newinput)
-     else
-       parent.each {|p|
-         if p['text'] == newcinput
-           p['children'] = build_recursive_tree(p['children'],newinput)
-         end
-       }
-     end
+       parent << {'text' => newcinput, 'cls' => 'folder', 'children' => []}
+     end  
+     parent.each {|p|
+       if p['text'] == newcinput
+         p['children'] = build_recursive_tree(p['children'],newinput)
+       end
+     }
    end
 
     if input.count > 0
@@ -348,10 +223,10 @@ class Modules < BeEF::Extension::AdminUI::HttpController
 
     # if dynamic modules are found in the DB, then we don't have yaml config for them
     # and loading must proceed in a different way.
-    dynamic_modules = BeEF::Core::Models::CommandModule.all(:path.like => "Dynamic/")
+    dynamic_modules = BeEF::Core::Models::CommandModule.where('path LIKE ?', 'Dynamic/')
 
     if(dynamic_modules != nil)
-         all_modules = BeEF::Core::Models::CommandModule.all(:order => [:id.asc])
+         all_modules = BeEF::Core::Models::CommandModule.all.order(:id)
          all_modules.each{|dyn_mod|
          next if !dyn_mod.path.split('/')[1].match(/^metasploit/)
          command_mod_name = dyn_mod["name"]
@@ -380,7 +255,7 @@ class Modules < BeEF::Extension::AdminUI::HttpController
   def select_command_module
     command_module_id = @params['command_module_id'] || nil
     (print_error "command_module_id is nil";return) if command_module_id.nil?
-    command_module = BeEF::Core::Models::CommandModule.get(command_module_id)
+    command_module = BeEF::Core::Models::CommandModule.find(command_module_id)
     key = BeEF::Module.get_key_by_database_id(command_module_id)
 
     payload_name = @params['payload_name'] || nil
@@ -407,12 +282,12 @@ class Modules < BeEF::Extension::AdminUI::HttpController
     (print_error "nonce incorrect";return) if @session.get_nonce != nonce
 
     # get the browser id
-    zombie = Z.first(:session => zombie_session)
+    zombie = Z.where(:session => zombie_session).first
     (print_error "Zombie is nil";return) if zombie.nil?
     zombie_id = zombie.id
     (print_error "Zombie id is nil";return) if zombie_id.nil?
 
-    C.all(:command_module_id => command_module_id, :hooked_browser_id => zombie_id).each do |command|
+    C.where(:command_module_id => command_module_id, :hooked_browser_id => zombie_id).each do |command|
       commands.push({
         'id' => i,
         'object_id' => command.id,
@@ -469,7 +344,7 @@ class Modules < BeEF::Extension::AdminUI::HttpController
     # get params
     command_id = @params['command_id'] || nil
     (print_error "Command id is nil";return) if command_id.nil?
-    command = BeEF::Core::Models::Command.first(:id => command_id.to_i) || nil
+    command = BeEF::Core::Models::Command.find(command_id.to_i) || nil
     (print_error "Command is nil";return) if command.nil?
     # validate nonce
     nonce = @params['nonce'] || nil
@@ -505,11 +380,11 @@ class Modules < BeEF::Extension::AdminUI::HttpController
 	  oc.save
     }
 
-    zombie = Z.first(:session => zombie_session)
+    zombie = Z.where(:session => zombie_session).first
     (print_error "Zombie is nil";return) if zombie.nil?
     zombie_id = zombie.id
     (print_error "Zombie id is nil";return) if zombie_id.nil?
-    command_module = BeEF::Core::Models::CommandModule.get(command_module_id)
+    command_module = BeEF::Core::Models::CommandModule.find(command_module_id)
 
     if(command_module != nil && command_module.path.match(/^Dynamic/))
       dyn_mod_name = command_module.path.split('/').last
@@ -546,14 +421,14 @@ class Modules < BeEF::Extension::AdminUI::HttpController
     # get params
     command_id = @params['command_id']|| nil
     (print_error "Command id is nil";return) if command_id.nil?
-    command = BeEF::Core::Models::Command.first(:id => command_id.to_i) || nil
+    command = BeEF::Core::Models::Command.find(command_id.to_i) || nil
     (print_error "Command is nil";return) if command.nil?
 
     # get command_module
-    command_module = BeEF::Core::Models::CommandModule.first(:id => command.command_module_id)
+    command_module = BeEF::Core::Models::CommandModule.find(command.command_module_id)
     (print_error "command_module is nil";return) if command_module.nil?
 
-    resultsdb = BeEF::Core::Models::Result.all(:command_id => command_id)
+    resultsdb = BeEF::Core::Models::Result.where(:command_id => command_id)
     (print_error "Command id result is nil";return) if resultsdb.nil?
 
     resultsdb.each{ |result| results.push({'date' => result.date, 'data' => JSON.parse(result.data)}) }
@@ -573,10 +448,10 @@ class Modules < BeEF::Extension::AdminUI::HttpController
     # get params
     command_id = @params['command_id'] || nil
     (print_error "Command id is nil";return) if command_id.nil?
-    command = BeEF::Core::Models::Command.first(:id => command_id.to_i) || nil
+    command = BeEF::Core::Models::Command.find(command_id.to_i) || nil
     (print_error "Command is nil";return) if command.nil?
 
-    command_module = BeEF::Core::Models::CommandModule.get(command.command_module_id)
+    command_module = BeEF::Core::Models::CommandModule.find(command.command_module_id)
     (print_error "command_module is nil";return) if command_module.nil?
 
     if(command_module.path.split('/').first.match(/^Dynamic/))
@@ -626,7 +501,7 @@ class Modules < BeEF::Extension::AdminUI::HttpController
   def dynamic_modules2json(id)
     command_modules_json = {}
 
-    mod = BeEF::Core::Models::CommandModule.first(:id => id)
+    mod = BeEF::Core::Models::CommandModule.find(id)
 
     # if the module id is not in the database return false
     return {'success' => 'false'}.to_json if(not mod)
@@ -648,7 +523,7 @@ class Modules < BeEF::Extension::AdminUI::HttpController
   def dynamic_payload2json(id, payload_name)
     command_modules_json = {}
 
-    command_module = BeEF::Core::Models::CommandModule.get(id)
+    command_module = BeEF::Core::Models::CommandModule.find(id)
     (print_error "Module does not exists";return 'success' => 'false') if command_module.nil?
 
     payload_options = BeEF::Module.get_payload_options(command_module.name,payload_name)

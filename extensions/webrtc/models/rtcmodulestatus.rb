@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -13,32 +13,11 @@ module Models
   #
   
 
-  class Rtcmodulestatus
+  class Rtcmodulestatus < BeEF::Core::Model
+      
+      belongs_to :hooked_browser
+      belongs_to :command_module
   
-    include DataMapper::Resource
-    
-    storage_names[:default] = 'extension_webrtc_rtcmodulestatus'
-    
-    property :id, Serial
-
-    # The hooked browser id
-    property :hooked_browser_id, Text, :lazy => false
-
-    # The hooked browser's IP
-    # property :hooked_browser_ip, Text, :lazy => false
-
-    # The target hooked browser id
-    property :target_hooked_browser_id, Text, :lazy => false
-
-    # The command module ID
-    property :command_module_id, Text, :lazy => false
-
-    # The status field
-    property :status, Text, :lazy => true
-
-    # Timestamps
-    property :created_at, DateTime
-    property :updated_at, DateTime
 
   end
   

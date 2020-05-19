@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -27,7 +27,7 @@ module BeEF
           # load certificate
           begin
             cert_file = @conf.get('beef.extension.proxy.cert')
-            cert = File.open(cert_file)
+            cert = File.read(cert_file)
             ssl_context.cert = OpenSSL::X509::Certificate.new(cert)
           rescue
             print_error "[Proxy] Could not load SSL certificate '#{cert_file}'"
@@ -36,7 +36,7 @@ module BeEF
           # load key
           begin
             key_file = @conf.get('beef.extension.proxy.key')
-            key = File.open(key_file)
+            key = File.read(key_file)
             ssl_context.key = OpenSSL::PKey::RSA.new(key)
           rescue
             print_error "[Proxy] Could not load SSL key '#{key_file}'"
@@ -57,11 +57,14 @@ module BeEF
           # HTTP method # defaults to GET
           method = request_line[/^\w+/]
 
+          # Handle SSL requests
+          url_prefix = ''
           if method == "CONNECT" then
             # request_line is something like:
             # CONNECT example.com:443 HTTP/1.1
             host_port = request_line.split(" ")[1]
-            url_prefix = "https://" + host_port
+            proto = 'https'
+            url_prefix = proto + '://' + host_port
             loop do
               line = socket.readline
               if line.strip.empty?
@@ -72,27 +75,30 @@ module BeEF
             socket.accept
             print_debug("[PROXY] Handled CONNECT to #{host_port}")
             request_line = socket.readline
-            method = request_line[/^\w+/]
-          else
-            url_prefix = ""
           end
 
+          method, path, version = request_line.split(" ")
+
+          # HTTP scheme/protocol # defaults to http
+          proto = 'http' unless proto.eql?('https')
+
           # HTTP version # defaults to 1.0
-          version = request_line[/HTTP\/(1\.\d)\s*$/, 1]
-          version = "HTTP/1.0" if version.nil?
+          version = 'HTTP/1.0' if version !~ /\AHTTP\/\d\.\d\z/
 
-          # url # host:port/path
-          url = url_prefix + request_line[/^\w+\s+(\S+)/, 1]
+          # HTTP request path
+          path = request_line[/^\w+\s+(\S+)/, 1]
 
-          # We're overwriting the URI::Parser UNRESERVED regex to prevent BAD URI errors when sending attack vectors (see tolerant_parser)
+          # url # proto://host:port + path
+          url = url_prefix + path
+
+          # We're overwriting the URI::Parser UNRESERVED regex to prevent BAD URI errors
+          # when sending attack vectors (see tolerant_parser)
           # anti: somehow the config below was removed, have a look into this
           tolerant_parser = URI::Parser.new(:UNRESERVED => BeEF::Core::Configuration.instance.get("beef.extension.requester.uri_unreserved_chars"))
           uri = tolerant_parser.parse(url.to_s)
 
-          method, path, version = request_line.split(" ")
-          path = url_prefix + path
           # extensions/requester/api/hook.rb parses raw_request to find port and path
-          raw_request = [method, path, version].join(" ") + "\r\n"
+          raw_request = [method, uri.path, version].join(' ') + "\r\n"
           content_length = 0
 
           loop do
@@ -118,6 +124,7 @@ module BeEF
           http = H.new(
               :request => raw_request,
               :method => method,
+              :proto => proto,
               :domain => uri.host,
               :port => uri.port,
               :path => uri.path,
@@ -130,10 +137,10 @@ module BeEF
 
           # Wait for the HTTP response to be stored in the db.
           # TODO: re-implement this with EventMachine or with the Observer pattern.
-          while H.first(:id => http.id).has_ran != "complete"
+          while H.find(http.id).has_ran != "complete"
             sleep 0.5
           end
-          @response = H.first(:id => http.id)
+          @response = H.find(http.id)
           print_debug "[PROXY] <-- Response for request ##{@response.id} to [#{@response.path}] on domain [#{@response.domain}:#{@response.port}] correctly processed"
 
           response_body = @response['response_data']
@@ -157,13 +164,14 @@ module BeEF
               "Connection",
               "Expires",
               "Accept-Ranges",
+              "Transfer-Encoding",
               "Date"]
             headers.each_line do |line|
               # stripping the Encoding, Cache and other headers
               header_key = line.split(': ')[0]
               header_value = line.split(': ')[1]
               next if header_key.nil?
-              next if ignore_headers.include?(header_key)
+              next if ignore_headers.any?{ |h| h.casecmp(header_key) == 0 }
               if header_value.nil?
                 #headers_hash[header_key] = ""
               else
@@ -177,20 +185,25 @@ module BeEF
             end
           end
 
-          res = "#{version} #{response_status}\r\n#{response_headers}\r\n\r\n#{response_body}"
+          res = "#{version} #{response_status}\r\n#{response_headers}\r\n#{response_body}"
           socket.write(res)
           socket.close
         end
 
         def get_tunneling_proxy
-          proxy_browser = HB.first(:is_proxy => true)
-          if (proxy_browser != nil)
-            proxy_browser_id = proxy_browser.id.to_s
-          else
-            proxy_browser_id = 1
-            print_debug "[PROXY] Proxy browser not set. Defaulting to browser id #1"
+          proxy_browser = HB.where(:is_proxy => true).first
+          unless proxy_browser.nil?
+            return proxy_browser.session.to_s
           end
-          proxy_browser_id
+
+          hooked_browser = HB.first
+          unless hooked_browser.nil?
+            print_debug "[Proxy] Proxy browser not set. Defaulting to first hooked browser [id: #{hooked_browser.session}]"
+            return hooked_browser.session
+          end
+
+          print_error '[Proxy] No hooked browsers'
+          nil
         end
       end
     end

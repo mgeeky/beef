@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -1128,12 +1128,9 @@ beef.execute(function() {
         } catch(e) {
             beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=detecting Firefox extensions failed', beef.are.status_error());
         }
-    } else if(beef.browser.isIE()) {
-        try {
-            beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=detecting Internet Explorer extensions is not supported', beef.are.status_error());
-        } catch(e) {
-            beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=detecting Internet Explorer extensions failed', beef.are.status_error());
-        }
+    } else {
+      beef.debug('[Detect Extensions] Unspported browser');
+      beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=unsupported browser', beef.are.status_error());
     }
 
 });

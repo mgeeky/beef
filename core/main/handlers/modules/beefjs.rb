@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -21,10 +21,10 @@ module BeEF
             beef_js_path = "#{$root_dir}/core/main/client/"
 
             # @note External libraries (like jQuery) that are not evaluated with Eruby and possibly not obfuscated
-            ext_js_sub_files = %w(lib/jquery-1.10.2.min.js lib/jquery-migrate-1.2.1.min.js lib/evercookie.js lib/json2.js lib/mdetect.js lib/jquery.blockUI.js)
+            ext_js_sub_files = %w(lib/jquery-1.12.4.min.js lib/jquery-migrate-1.4.1.js lib/evercookie.js lib/json2.js lib/mdetect.js lib/platform.js lib/jquery.blockUI.js)
 
             # @note BeEF libraries: need Eruby evaluation and obfuscation
-            beef_js_sub_files = %w(beef.js browser.js browser/cookie.js browser/popup.js session.js os.js hardware.js dom.js logger.js net.js updater.js encode/base64.js encode/json.js net/local.js init.js mitb.js net/dns.js net/connection.js net/cors.js are.js)
+            beef_js_sub_files = %w(beef.js browser.js browser/cookie.js browser/popup.js session.js os.js hardware.js dom.js logger.js net.js updater.js encode/base64.js encode/json.js net/local.js init.js mitb.js geolocation.js net/dns.js net/connection.js net/cors.js net/requester.js net/xssrays.js net/portscanner.js are.js)
             # @note Load websocket library only if WS server is enabled in config.yaml
             if config.get("beef.http.websocket.enable") == true
               beef_js_sub_files << "websocket.js"
@@ -105,6 +105,7 @@ module BeEF
               hook_session_config['websocket_secure'] = config.get("beef.http.websocket.secure")
               hook_session_config['websocket_port'] = config.get("beef.http.websocket.port")
               hook_session_config['ws_poll_timeout'] = config.get("beef.http.websocket.ws_poll_timeout")
+              hook_session_config['ws_connect_timeout'] = config.get("beef.http.websocket.ws_connect_timeout")
               hook_session_config['websocket_sec_port']= config.get("beef.http.websocket.secure_port")
             end
 
@@ -162,7 +163,13 @@ module BeEF
               component_path = beefjs_components[k]
 
               # @note we output the component to the hooked browser
-              @body << File.read(component_path)+"\n\n"
+              config = BeEF::Core::Configuration.instance
+              if config.get("beef.extension.evasion.enable")
+                evasion = BeEF::Extension::Evasion::Evasion.instance
+                @body << evasion.obfuscate(File.read(component_path) + "\n\n")
+              else
+                @body << File.read(component_path) + "\n\n"
+              end
 
               # @note finally we add the component to the list of components already generated so it does not get generated numerous times.
               if @beef_js_cmps.eql? ''

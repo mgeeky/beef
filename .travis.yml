@@ -1,0 +1,28 @@
+language: ruby
+rvm:
+  - 2.5.3
+  - 2.6.0
+  - 2.6.3
+  - 2.6.5
+  - 2.7.0
+notifications:
+  email:
+    recipients:
+      - wade@bindshell.net
+    on_success: always
+    on_failure: always
+# safelist
+branches:
+  only:
+  - master
+addons:
+  apt:
+    packages:
+      - libsqlite3-dev
+      - build-essential
+      - patch
+      - ruby-dev
+      - zlib1g-dev
+      - liblzma-dev
+      - libcurl4-openssl-dev
+

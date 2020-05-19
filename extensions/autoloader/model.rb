@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -7,16 +7,9 @@ module BeEF
 module Core
 module Models
   
-class Autoloading
-  
-  include DataMapper::Resource
-  
-  storage_names[:default] = 'autoloading'
-  
-  property :id, Serial
-  property :in_use, Boolean
-  
-  belongs_to :command
+class Autoloading < BeEF::Core::Model
+
+    belongs_to :command
   
 end
   

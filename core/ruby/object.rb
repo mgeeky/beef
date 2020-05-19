@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -35,4 +35,9 @@ class Object
     self.is_a?(Class)
   end
 
+  # Returns true if the object is nil, and empty string, or empty array
+  # @return [Boolean]
+  def blank?
+    self.respond_to?(:empty?) ? !!empty? : !self
+  end
 end

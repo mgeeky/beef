@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -29,8 +29,13 @@ MainPanel = function(){
         }
     });
 
-    this.grid = new DataGrid('<%= @base_path %>/logs/all.json',30);
-	this.grid.border = false;
+    
+    this.logs_grid = new LogsDataGrid('/api/logs',30);
+    this.logs_grid.border = false;
+
+    this.zombies_grid = new ZombieDataGrid('/api/hooks/all', 30);
+    this.zombies_grid.border = false;
+
     this.welcome_tab = new WelcomeTab;
 
     MainPanel.superclass.constructor.call(this, {
@@ -53,13 +58,23 @@ MainPanel = function(){
             shadow:true,
             items:[
                 this.welcome_tab
-            ]},{
+            ]
+        },{
             id:'logs-view',
             layout:'border',
             title:'Logs',
             hideMode:'offsets',
             items:[
-                this.grid
+                this.logs_grid
+            ]
+        },
+        {
+            id:'zombies-view',
+            layout:'border',
+            title:'Zombies',
+            hideMode:'offsets',
+            items:[
+                this.zombies_grid
             ]
         }]
     });

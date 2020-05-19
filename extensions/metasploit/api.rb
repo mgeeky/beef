@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -16,16 +16,29 @@ module BeEF
           # Load modules from metasploit just after all other module config is loaded
           def self.post_soft_load
             msf = BeEF::Extension::Metasploit::RpcClient.instance
-            if msf.login
+
+            timeout = 10
+            connected = false
+            Timeout.timeout(timeout) do
+              begin
+                print_status "Connecting to Metasploit on #{BeEF::Core::Configuration.instance.get('beef.extension.metasploit.host')}:#{BeEF::Core::Configuration.instance.get('beef.extension.metasploit.port')}"
+                connected = msf.login
+              rescue Timeout::Error
+                return
+              end
+            end
+
+            if connected
               msf_module_config = {}
-              path = BeEF::Core::Configuration.instance.get('beef.extension.metasploit.path')
-              if !BeEF::Core::Console::CommandLine.parse[:resetdb] && File.exists?("#{path}msf-exploits.cache")
-                print_debug "Attempting to use Metasploit exploits cache file"
-                raw = File.read("#{path}msf-exploits.cache")
+              path = "#{$root_dir}/#{BeEF::Core::Configuration.instance.get('beef.extension.metasploit.path')}/msf-exploits.cache"
+              if !BeEF::Core::Console::CommandLine.parse[:resetdb] && File.exist?(path)
+                print_debug 'Attempting to use Metasploit exploits cache file'
+                raw = File.read(path)
                 begin
-                  msf_module_config = YAML.load(raw)
+                  msf_module_config = YAML.safe_load(raw)
                 rescue => e
-                  puts e
+                  print_error "[Metasploit] #{e.message}"
+                  print_error e.backtrace
                 end
                 count = 1
                 msf_module_config.each { |k, v|
@@ -90,9 +103,9 @@ module BeEF
                   end
                 }
                 print "\r\n"
-                File.open("#{path}msf-exploits.cache", "w") do |f|
+                File.open(path, "w") do |f|
                   f.write(msf_module_config.to_yaml)
-                  print_debug "Wrote Metasploit exploits to cache file"
+                  print_debug "Wrote Metasploit exploits to cache file: #{path}"
                 end
               end
               BeEF::Core::Configuration.instance.set('beef.module', msf_module_config)
@@ -105,7 +118,7 @@ module BeEF
             msf = BeEF::Extension::Metasploit::RpcClient.instance
             if msf_key != nil && msf.login
               msf_module_options = msf.call('module.options', 'exploit', msf_key)
-              com = BeEF::Core::Models::CommandModule.first(:name => mod)
+              com = BeEF::Core::Models::CommandModule.where(:name => mod).first
               if msf_module_options
                 options = BeEF::Extension::Metasploit.translate_options(msf_module_options)
                 options << {
@@ -180,7 +193,7 @@ module BeEF
             if msf_key != nil && msf.login
               msf_module_options = msf.call('module.options', 'payload', payload)
 
-              com = BeEF::Core::Models::CommandModule.first(:name => mod)
+              com = BeEF::Core::Models::CommandModule.where(:name => mod).first
               if msf_module_options
                 options = BeEF::Extension::Metasploit.translate_options(msf_module_options)
                 return options

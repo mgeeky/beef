@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -21,7 +21,7 @@ module BeEF
 
             config = BeEF::Core::Configuration.instance
             # @note get the command module
-            command_module = BeEF::Core::Models::CommandModule.first(:id => command.command_module_id)
+            command_module = BeEF::Core::Models::CommandModule.where(:id => command.command_module_id).first
             (print_error "command_module is nil"; return) if command_module.nil?
             (print_error "command_module.path is nil"; return) if command_module.path.nil?
 
@@ -53,7 +53,7 @@ module BeEF
             if config.get("beef.http.websocket.enable") && ws.getsocket(hooked_browser.session)
               #content = command_module.output.gsub('//
               #//
-              #//   Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+              #//   Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
               #//   Browser Exploitation Framework (BeEF) - http://beefproject.com
               #//   See the file 'doc/COPYING' for copying permission
               #//
@@ -70,7 +70,7 @@ module BeEF
 
             # @note flag that the command has been sent to the hooked browser
             command.instructions_sent = true
-            command.save
+            command.save!
           end
 
         end

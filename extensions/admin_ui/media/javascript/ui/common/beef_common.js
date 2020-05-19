@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -45,7 +45,7 @@ if(typeof beefwui === 'undefined' && typeof window.beefwui === 'undefined') {
          */
         get_hb_id: function(sess){
 	    	var id = "";
-	    	$jwterm.ajax({
+	    	jQuery.ajax({
 	    		type: 'GET',
 	    		url: "/api/hooks/?token=" + this.get_rest_token(),
 	    		async: false,
@@ -77,7 +77,7 @@ if(typeof beefwui === 'undefined' && typeof window.beefwui === 'undefined') {
        */
       get_info_from_id: function(id) {
 	    	var info = {};
-	    	$jwterm.ajax({
+	    	jQuery.ajax({
 	    		type: 'GET',
 	    		url: "/api/hooks/?token=" + this.get_rest_token(),
 	    		async: false,
@@ -89,7 +89,7 @@ if(typeof beefwui === 'undefined' && typeof window.beefwui === 'undefined') {
                         }
                     }
 
-                    if ($jwterm.isEmptyObject(info)) {
+                    if (jQuery.isEmptyObject(info)) {
                       for (var k in data['hooked-browsers']['offline']) {
                           if (data['hooked-browsers']['offline'][k].id === id) {
                               info = data['hooked-browsers']['offline'][k];
@@ -103,41 +103,6 @@ if(typeof beefwui === 'undefined' && typeof window.beefwui === 'undefined') {
 	    	});                                                     
             console.log(info);
             return info;
-
-      },
-
-      /**
-       * Get hooked browser info from ID
-       */
-      get_fullinfo_from_id: function(id) {
-	    	var info = {};
-	    	$jwterm.ajax({
-	    		type: 'POST',
-	    		url: "<%= @base_path %>/panel/hooked-browser-tree-update.json",
-	    		async: false,
-	    		processData: false,
-	    		success: function(data){                            
-                    for (var k in data['hooked-browsers']['online']) {
-                        if (data['hooked-browsers']['online'][k].id === id) {
-                            info = data['hooked-browsers']['online'][k];
-                        }
-                    }
-
-                    if ($jwterm.isEmptyObject(info)) {
-                      for (var k in data['hooked-browsers']['offline']) {
-                          if (data['hooked-browsers']['offline'][k].id === id) {
-                              info = data['hooked-browsers']['offline'][k];
-                          }
-                      }
-                    }
-	    		},
-	    		error: function(){                                  
-	    			commands_statusbar.update_fail("Error getting hb ip");
-	    		}
-	    	});                                                     
-            console.log(info);
-            return info;
-
       }
     };
 

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -13,7 +13,4 @@ require 'core/ruby/object'
 require 'core/ruby/string'
 require 'core/ruby/print'
 require 'core/ruby/hash'
-
-# @note Patching DataMapper Data Objects Adapter (dm-do-adapter)
-require 'core/ruby/patches/dm-do-adapter/adapter.rb'
 

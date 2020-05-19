@@ -1,22 +1,20 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
 
-/*!
- * @literal object: beef.browser.popup
- * 
+/**
  * Provides fuctions for working with cookies. 
  * Several functions adopted from http://davidwalsh.name/popup-block-javascript
  * Original author unknown.
- * 
+ * @namespace beef.browser.popup
  */
 beef.browser.popup = {
-	
+		/** @memberof beef.browser.popup */
 		blocker_enabled: function ()
 		{
-			screenParams = beef.browser.getScreenSize();
+			screenParams = beef.hardware.getScreenSize();
 			var popUp = window.open('/', 'windowName0', 'width=1, height=1, left='+screenParams.width+', top='+screenParams.height+', scrollbars, resizable');
 			if (popUp == null || typeof(popUp)=='undefined') {   
 			  	return true;

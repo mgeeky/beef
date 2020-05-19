@@ -1,77 +1,75 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
+require 'yaml'
+require 'bundler/setup'
+load 'tasks/otr-activerecord.rake'
+#require 'pry-byebug'
 
-task :default => ["quick"]
 
-desc "Run quick tests"
-task :quick do
-  Rake::Task['unit'].invoke # run unit tests
+task :default => ["spec"]
+
+desc 'Generate API documentation to doc/rdocs/index.html'
+task :rdoc do
+  Rake::Task['rdoc:rerdoc'].invoke
 end
 
-desc "Run all tests"
-task :all do
-  Rake::Task['integration'].invoke # run integration tests
-  Rake::Task['unit'].invoke # run unit tests
-  Rake::Task['msf'].invoke # run msf tests
-end
+## RSPEC
+require 'rspec/core/rake_task'
+RSpec::Core::RakeTask.new(:spec)
 
-desc "Run automated tests (for Jenkins)"
-task :automated do
-  Rake::Task['xserver_start'].invoke
-  Rake::Task['all'].invoke
-  Rake::Task['xserver_stop'].invoke
-end
 
-desc "Run integration unit tests"
-task :integration => ["install"] do
-  Rake::Task['beef_start'].invoke
-  sh "export DISPLAY=:0; cd test/integration;ruby -W0 ts_integration.rb"
-  Rake::Task['beef_stop'].invoke
-end
-
-desc "Run integration unit tests"
-task :unit => ["install"] do
-  sh "cd test/unit;ruby -W0 ts_unit.rb"
-end
-
-desc "Run MSF unit tests"
-task :msf => ["install", "msf_install"] do
-  Rake::Task['msf_update'].invoke
-  Rake::Task['msf_start'].invoke
-  sh "cd test/thirdparty/msf/unit/;ruby -W0 ts_metasploit.rb"
-  Rake::Task['msf_stop'].invoke
-end
 
 
 ################################
-# run bundle-audit
+# SSL/TLS certificate
 
-namespace :bundle_audit do
-  require 'bundler/audit/cli'
-
-  desc 'Update bundle-audit database'
-  task :update do
-    Bundler::Audit::CLI.new.update
+namespace :ssl do
+  desc 'Create a new SSL certificate'
+  task :create do
+    if File.file?('beef_key.pem')
+      puts 'Certificate already exists. Replace? [Y/n]'
+      confirm = STDIN.getch.chomp
+      unless confirm.eql?('') || confirm.downcase.eql?('y')
+        puts "Aborted"
+        exit 1
+      end
+    end
+    Rake::Task['ssl:replace'].invoke
   end
 
-  desc 'Check gems for vulns using bundle-audit'
-  task :check do
-    Bundler::Audit::CLI.new.check
-  end
-
-  desc 'Update vulns database and check gems using bundle-audit'
-  task :run do
-    Rake::Task['bundle_audit:update'].invoke
-    Rake::Task['bundle_audit:check'].invoke
+  desc 'Re-generate SSL certificate'
+  task :replace do
+    if File.file?('/usr/local/bin/openssl')
+      path = '/usr/local/bin/openssl'
+    elsif File.file?('/usr/bin/openssl')
+      path = '/usr/bin/openssl'
+    else
+      puts "[-] Error: could not find openssl"
+      exit 1
+    end
+    IO.popen([path, 'req', '-new', '-newkey', 'rsa:4096', '-sha256', '-x509', '-days', '3650', '-nodes', '-out', 'beef_cert.pem', '-keyout', 'beef_key.pem', '-subj', '/CN=localhost'], 'r+').read.to_s
   end
 end
 
-desc "Run bundle-audit"
-task :bundle_audit do
-  Rake::Task['bundle_audit:run'].invoke
+################################
+# rdoc
+
+namespace :rdoc do
+  require 'rdoc/task'
+
+  desc 'Generate API documentation to doc/rdocs/index.html'
+  Rake::RDocTask.new do |rd|
+    rd.rdoc_dir = 'doc/rdocs'
+    rd.main = 'README.mkd'
+    rd.rdoc_files.include('core/**/*\.rb')
+      #'extensions/**/*\.rb'
+      #'modules/**/*\.rb'
+    rd.options << '--line-numbers'
+    rd.options << '--all'
+  end
 end
 
 
@@ -101,28 +99,54 @@ end
 
 task :xserver_stop do
   puts "\nShutting down X11 Server...\n"
-  sh "ps -ef|grep Xvfb|grep -v grep|awk '{print $2}'|xargs kill"
+  sh "ps -ef|grep Xvfb|grep -v grep|grep -v rake|awk '{print $2}'|xargs kill"
 end
 
 ################################
 # BeEF environment set up
 
 @beef_process_id = nil;
+@beef_config_file = 'tmp/rk_beef_conf.yaml';
+
 
 task :beef_start => 'beef' do
+  # read environment param for creds or use bad_fred
+  test_user = ENV['TEST_BEEF_USER'] || 'bad_fred'
+  test_pass = ENV['TEST_BEEF_PASS'] || 'bad_fred_no_access'
+
+  # write a rake config file for beef
+  config = YAML.safe_load(File.read('./config.yaml'))
+  config['beef']['credentials']['user'] = test_user
+  config['beef']['credentials']['passwd'] = test_pass
+  Dir.mkdir('tmp') unless Dir.exists?('tmp')
+  File.open(@beef_config_file, 'w') { |f| YAML.dump(config, f) }
+
+  # set the environment creds -- in case we're using bad_fred
+  ENV['TEST_BEEF_USER'] = test_user
+  ENV['TEST_BEEF_PASS'] = test_pass
+  config = nil
+  puts "Using config file: #{@beef_config_file}\n"
+
   printf "Starting BeEF (wait a few seconds)..."
-  @beef_process_id = IO.popen("ruby ./beef -x 2> /dev/null", "w+")
-  delays = [10, 10, 5, 5, 4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1]
+  @beef_process_id = IO.popen("ruby ./beef -c #{@beef_config_file} -x 2> /dev/null", "w+")
+  delays = [5, 5, 5, 4, 4, 3, 2, 1, 1, 1, 1, 1, 1, 1, 1, 1]
   delays.each do |i| # delay for a few seconds
     printf '.'
     sleep (i)
   end
-  puts '.'
+  puts ".\n\n"
 end
 
 task :beef_stop do
-  puts "\nShutting down BeEF...\n"
-  sh "ps -ef|grep beef|grep -v grep|awk '{print $2}'|xargs kill"
+  # cleanup tmp/config files
+  puts "\nCleanup config file:\n"
+  rm_f @beef_config_file
+  ENV['TEST_BEEF_USER'] = nil
+  ENV['TEST_BEEF_PASS'] = nil
+
+  # shutting down
+  puts "Shutting down BeEF...\n"
+  sh "ps -ef|grep beef|grep -v grep|grep -v rake|awk '{print $2}'|xargs kill"
 end
 
 ################################
@@ -179,7 +203,7 @@ end
 
 ################################
 # Create CDE Package
-# This will download and make the CDE Executable and 
+# This will download and make the CDE Executable and
 # gnereate a CDE Package in cde-package
 
 task :cde do
@@ -214,7 +238,10 @@ task :cde_beef_start => 'beef' do
   puts '.'
 end
 
-
 ################################
-
-
+# ActiveRecord
+namespace :db do
+  task :environment do
+    require_relative "beef"
+  end
+end

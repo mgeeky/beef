@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -32,6 +32,7 @@ Ext.onReady(function() {
 			mainPanel
          ]
     });
+  setTimeout("locationHashChanged()", 1000);
 	
 	new DoLogout();
 });
@@ -39,16 +40,17 @@ Ext.onReady(function() {
 /*
  * Panel Events Updater
  *
- * This event updater retrieves updates every 8 seconds. Those updates
- * are then pushed to various managers (i.e. the zombie manager).
+ * This event updater retrieves zombie updates every periodically.
+ * The poll timer is specified in befe.extension.admin_ui.panel_update_interval
+ * These updates are then pushed to various managers (i.e. the zombie manager).
  */
 var lastpoll = new Date().getTime();
 
 Ext.TaskMgr.start({
 	run: function() {
 		Ext.Ajax.request({
-			url: '<%= @base_path %>/panel/hooked-browser-tree-update.json',
-			method: 'POST',
+			url: '/api/hooks/?token=' + beefwui.get_rest_token(),
+			method: 'GET',
 			success: function(response) {
 				var updates;
 				try {
@@ -58,12 +60,10 @@ Ext.TaskMgr.start({
 					var hr = document.getElementById("header-right");
 					hr.innerHTML = "You appear to be logged out. <a href='<%= @base_path %>/panel/'>Login</a>";
 				}
-				var distributed_engine_rules = (updates['ditributed-engine-rules']) ? updates['ditributed-engine-rules'] : null;
-        beefwui.hooked_browsers = (updates['hooked-browsers']); //? updates['hooked-browsers'] : null;
 				var hooked_browsers = (updates['hooked-browsers']) ? updates['hooked-browsers'] : null;
 				
 				if(zombiesManager && hooked_browsers) {
-					zombiesManager.updateZombies(hooked_browsers, distributed_engine_rules);
+					zombiesManager.updateZombies(hooked_browsers);
 				}
 				lastpoll = new Date().getTime();
 				var hr = document.getElementById("header-right");
@@ -80,5 +80,36 @@ Ext.TaskMgr.start({
 		});
 	},
 	
-	interval: 8000
+	interval: <%= (BeEF::Core::Configuration.instance.get("beef.extension.admin_ui.panel_update_interval") || 10).to_i * 1_000 %>
 });
+
+/*
+ * Allow selecting a browser with #id=<session> in the /ui/panel URL
+*/
+function locationHashChanged() {
+  var id = location_hash('id');
+
+  if (id === null) return;
+
+  id = id.replace(/[^a-z0-9]/gi, '');
+  console.log("Loading hooked browser with ID: " + id);
+  mainPanel.remove(mainPanel.getComponent('current-browser'));
+  if(!mainPanel.getComponent('current-browser')) {
+    mainPanel.add(new ZombieTab({session: id}));
+  }
+
+  mainPanel.activate(mainPanel.getComponent('current-browser'));
+  //removeHash();
+}
+
+function location_hash(key) {
+  var matches = location.hash.match(new RegExp(key+'=([^&]*)'));
+  return matches ? matches[1] : null;
+}
+
+function removeHash () {
+  history.pushState("", document.title, window.location.pathname + window.location.search);
+}
+
+window.onhashchange = locationHashChanged;
+

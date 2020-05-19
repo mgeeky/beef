@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -54,65 +54,78 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
 	
 	//saves the configuration for the tree
 	tree_configuration: {
-		'sub-branch' : 'domain',
-		'distributed' : false
+		'sub-branch' : 'domain'
 	},
 
-	
 	//store the list of online hooked browsers in an array
 	online_hooked_browsers_array: new Array,
 	
 	//store the list of offline hooked browsers in an array
 	offline_hooked_browsers_array: new Array,
 	
-	//store the distributed engine rules
-	distributed_engine_rules: null,
-
     //add a context menu that will contain common action shortcuts for HBs
     contextMenu: new Ext.menu.Menu({
-          items: [{
-                        id: 'use_as_proxy',
-                        text: 'Use as Proxy',
-                        iconCls: 'zombie-tree-ctxMenu-proxy'
-                    },{
-                        id: 'xssrays_hooked_domain',
-                        text: 'Launch XssRays on Hooked Domain',
-                        iconCls: 'zombie-tree-ctxMenu-xssrays'
-                    },{
-                        id: 'rtc_caller',
-                        text: 'Set as WebRTC Caller',
-                        iconCls: 'zombie-tree-ctxMenu-rtc'
-                    },{
-                        id: 'rtc_receiver',
-                        text: 'Set as WebRTC Receiver and GO',
-                        iconCls: 'zombie-tree-ctxMenu-rtc',
-                        activated: false
-                    },{
-                        xtype: 'menuseparator'
-                    },{
-                        id: 'delete_zombie',
-                        text: 'Delete Zombie',
-                        iconCls: 'zombie-tree-ctxMenu-delete'
-                    }
+      items: <%=
+  context_menu = []
+  sep = { xtype: 'menuseparator' }
 
-          ],
+  if (BeEF::Core::Configuration.instance.get("beef.extension.proxy.enable"))
+    context_menu << {
+      id: 'use_as_proxy',
+      text: 'Use as Proxy',
+      iconCls: 'zombie-tree-ctxMenu-proxy'
+    }
+    context_menu << sep
+  end
+  if (BeEF::Core::Configuration.instance.get("beef.extension.xssrays.enable"))
+    context_menu << {
+      id: 'xssrays_hooked_domain',
+      text: 'Launch XssRays on Hooked Domain',
+      iconCls: 'zombie-tree-ctxMenu-xssrays'
+    }
+    context_menu << sep
+  end
+  if (BeEF::Core::Configuration.instance.get("beef.extension.webrtc.enable"))
+    context_menu << {
+      id: 'rtc_caller',
+      text: 'Set as WebRTC Caller',
+      iconCls: 'zombie-tree-ctxMenu-rtc'
+    }
+    context_menu << {
+      id: 'rtc_receiver',
+      text: 'Set as WebRTC Receiver and GO',
+      iconCls: 'zombie-tree-ctxMenu-rtc',
+      activated: false
+    }
+    context_menu << sep
+  end
+
+  context_menu << {
+    id: 'delete_zombie',
+    text: 'Delete Zombie',
+    iconCls: 'zombie-tree-ctxMenu-delete'
+  }
+
+  context_menu.to_json
+%>,
+
           listeners: {
               itemclick: function(item, object) {
                   var hb_id = this.contextNode.id.split('zombie-online-')[1];
-		          var hb_id_off = this.contextNode.id.split('zombie-offline-')[1];
+		              var hb_id_off = this.contextNode.id.split('zombie-offline-')[1];
                   switch (item.id) {
                       case 'use_as_proxy':
                            Ext.Ajax.request({
-                                url: '<%= @base_path %>/proxy/setTargetZombie',
+                                url: '/api/proxy/setTargetZombie?token=' + beefwui.get_rest_token(),
                                 method: 'POST',
-                                params: 'hb_id=' + escape(hb_id)
+                                headers: {'Content-Type': 'application/json; charset=UTF-8'},
+                                jsonData: {'hb_id': escape(hb_id)}
                             });
                           break;
                        case 'xssrays_hooked_domain':
                            Ext.Ajax.request({
-                                url: '<%= @base_path %>/xssrays/set_scan_target',
-                                method: 'POST',
-                                params: 'hb_id=' + escape(hb_id)
+                                url: '/api/xssrays/scan/' + escape(hb_id) + '?token=' + beefwui.get_rest_token(),
+                                method: 'POST'
                             });
                           break;
                        case 'rtc_caller':
@@ -133,19 +146,18 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
                           });
                           break;
                        case 'delete_zombie':
-			              var token = beefwui.get_rest_token();
-			              var hid = '';
-			              if (typeof hb_id_off === 'undefined'){
-			                 hid=hb_id;
-			              }else{
-			                 hid=hb_id_off;
-			              }
-			              var url = "/api/hooks/" + escape(hid) + "/delete?token=" + token;
-                          Ext.Ajax.request({
-                            url: url,
-                            method: 'GET'
-                          });
-                          break;
+			                   var token = beefwui.get_rest_token();
+                         if (!confirm('Are you sure you want to delete zombie [id: ' + hb_id + '] ?\nWarning: this will remove all zombie related data, including logs and command results!')) {
+                           //commands_statusbar.update_fail('Cancelled');
+                           return;
+                         }
+                         //commands_statusbar.update_sending('Removing zombie [id: ' + hb_id + '] ...');
+                         var url = "/api/hooks/" + escape(hb_id) + "/delete?token=" + token;
+                         Ext.Ajax.request({
+                           url: url,
+                           method: 'GET'
+                         });
+                         break;
                   }
               }
           }
@@ -156,13 +168,7 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
 		click: function(node, e) {
             globalnode = node;
 			if(!node.leaf) return;
-	   
-            mainPanel.remove(mainPanel.getComponent('current-browser'));
-			if(!mainPanel.getComponent('current-browser')) {
-				mainPanel.add(new ZombieTab(node.attributes));
-			}
-			
-			mainPanel.activate(mainPanel.getComponent('current-browser'));
+      window.location.hash = "#id=" + node.attributes.session;
 		},
         //show the context menu when a HB is right-clicked
         contextmenu: function(node, event){
@@ -177,6 +183,7 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
                 //     });
                 // }
                 var c = node.getOwnerTree().contextMenu;
+try{
                 c.contextNode = node;
                 if (typeof(beefwui.rtc_caller) === 'undefined') {
                     c.items.get('rtc_receiver').disable();
@@ -185,14 +192,15 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
                 } else {
                     c.items.get('rtc_receiver').enable();
                 }
-
+} catch(e) {
+  // could not render the webrtc context menu - is webrtc extenion disabled?
+}
                 // c.items['rtc_receiver'].disable();
                 // c.add({
                 //     id: 'rtc_caller',
                 //     text: 'Set as WebRTC Caller',
                 //     iconCls: 'zombie-tree-ctxMenu-xssrays'});
                 c.showAt(event.getXY());
-
         },
 		//update the set of rules when a checkbox is clicked
 		checkchange: function(node, checked) {
@@ -257,10 +265,265 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
 		var exists = this.getNodeById(hb_id);
 		if(exists) return;
 
-		hooked_browser.qtip = hooked_browser.balloon_text;
+		// set zombie icons. this should eventually be replaced with CSS classes
+		var browser_icon = 'unknown.png';
+		switch (hooked_browser.browser_name) {
+			case "FF":
+				browser_icon = 'firefox.png';
+				break;
+			case "IE":
+				browser_icon = 'msie.png';
+				break;
+			case "E":
+				browser_icon = 'edge.png';
+				break;
+			case "EP":
+				browser_icon = 'epiphany.png';
+				break;
+			case "S":
+				browser_icon = 'safari.png';
+				break;
+			case "C":
+				browser_icon = 'chrome.png';
+				break;
+			case "O":
+				browser_icon = 'opera.ico';
+				break;
+			case "MI":
+				browser_icon = 'midori.png';
+				break;
+			case "OD":
+				browser_icon = 'odyssey.png';
+				break;
+			case "BR":
+				browser_icon = 'brave.png';
+				break;
+			default:
+				browser_icon = 'unknown.png';
+				break;
+		}
+
+		var os_icon = 'unknown.png';
+		switch (hooked_browser.os_name) {
+			case "Android":
+				os_icon = 'android.png';
+				break;
+			case "Windows":
+				os_icon = 'win.png';
+				break;
+			case "Linux":
+				os_icon = 'linux.png';
+				break;
+			case "Mac":
+				os_icon = 'mac.png';
+				break;
+			case "QNX":
+				os_icon = 'qnx.ico';
+				break;
+			case "SunOS":
+				os_icon = 'sunos.gif';
+				break;
+			case "BeOS":
+				os_icon = 'beos.png';
+				break;
+			case "OpenBSD":
+				os_icon = 'openbsd.ico';
+				break;
+			case "iOS":
+				os_icon = 'ios.png';
+				break;
+			case "iPhone":
+				os_icon = 'iphone.jpg';
+				break;
+			case "iPad":
+				os_icon = 'ipad.png';
+				break;
+			case "iPod":
+				os_icon = 'ipod.jpg';
+				break;
+			case "webOS":
+				os_icon = 'webos.png';
+				break;
+			case "AROS":
+				os_icon = 'icaros.png';
+				break;
+			case "Maemo":
+				os_icon = 'maemo.ico';
+				break;
+			case "BlackBerry":
+				os_icon = 'blackberry.png';
+				break;
+			default:
+				os_icon = 'unknown.png';
+				break;
+		}
+
+		var hw_icon = 'unknown.png';
+		switch (hooked_browser.hw_name) {
+			case "Virtual Machine":
+				hw_icon = 'vm.png';
+				break;
+			case "Laptop":
+				hw_icon = 'laptop.png';
+				break;
+			case "Android":
+				hw_icon = 'android.png';
+				break;
+			case "Android Phone":
+				hw_icon = 'android.png';
+				break;
+			case "Android Tablet":
+				hw_icon = 'android.png';
+				break;
+			case "iPhone":
+				hw_icon = 'iphone.jpg';
+				break;
+			case "iPod Touch":
+				hw_icon = 'ipod.jpg';
+				break;
+			case "iPad":
+				hw_icon = 'ipad.png';
+				break;
+			case "BlackBerry":
+				hw_icon = 'blackberry.png';
+				break;
+			case "BlackBerry Tablet":
+				hw_icon = 'blackberry.png';
+				break;
+			case "BlackBerry Touch":
+				hw_icon = 'blackberry.png';
+				break;
+			case "BlackBerry OS 5":
+				hw_icon = 'blackberry.png';
+				break;
+			case "BlackBerry OS 6":
+				hw_icon = 'blackberry.png';
+				break;
+			case "Nokia":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia S60 Open Source":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia S60":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia S70":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia S80":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia S90":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Nokia Symbian":
+				hw_icon = 'nokia.ico';
+				break;
+			case "Maemo Tablet":
+				hw_icon = 'maemo.ico';
+				break;
+			case "HTC":
+				hw_icon = 'htc.ico';
+				break;
+			case "Motorola":
+				hw_icon = 'motorola.png';
+				break;
+			case "Zune":
+				hw_icon = 'zune.gif';
+				break;
+			case "Kindle":
+				hw_icon = 'kindle.png';
+				break;
+			case "Kindle Fire":
+				hw_icon = 'kindle.png';
+				break;
+			case "Nexus":
+				hw_icon = 'nexus.png';
+				break;
+			case "Google Nexus One":
+				hw_icon = 'nexus.png';
+				break;
+			case "Ericsson":
+				hw_icon = 'sony_ericsson.png';
+				break;
+			case "Windows Phone":
+				hw_icon = 'win.png';
+				break;
+			case "Windows Phone 7":
+				hw_icon = 'win.png';
+				break;
+			case "Windows Phone 8":
+				hw_icon = 'win.png';
+				break;
+			case "Windows Phone 10":
+				hw_icon = 'win.png';
+				break;
+			case "Windows Mobile":
+				hw_icon = 'win.png';
+				break;
+			default:
+				hw_icon = 'pc.png';
+				break;
+		}
+
+		// set zombie hover balloon text for tree node
+		var balloon_text = "";
+		balloon_text += hooked_browser.ip;
+		balloon_text += "<hr/>"
+		balloon_text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/favicon.png' /> ";
+		balloon_text += "Origin: " + hooked_browser.domain + ":" + hooked_browser.port;
+		balloon_text += "<br/>";
+		balloon_text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(browser_icon) + "' /> ";
+		balloon_text += "Browser: " + hooked_browser.browser_name + " " + hooked_browser.browser_version;
+		balloon_text += "<br/>";
+		balloon_text += " <img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(os_icon) + "' /> ";
+		if (hooked_browser.os_version == 'Unknown') {
+		  balloon_text += "OS: " + hooked_browser.os_name;
+		} else {
+		  balloon_text += "OS: " + hooked_browser.os_name + ' ' + hooked_browser.os_version;
+		}
+		balloon_text += "<br/>";
+		balloon_text += " <img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(hw_icon) + "' /> ";
+		balloon_text += "Hardware: " + hooked_browser.hw_name;
+		balloon_text += "<br/>";
+
+		if (hooked_browser.country == 'Unknown') {
+			balloon_text += " <img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/unknown.png' /> ";
+			balloon_text += "Location: Unknown";
+		} else {
+			balloon_text += " <img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/country-squared/" + escape(hooked_browser.country_code.toLowerCase()) + ".svg' /> ";
+			balloon_text += "Location: " + hooked_browser.city + ", " + hooked_browser.country;
+		}
+
+		balloon_text += "<hr/>";
+		balloon_text += "Local Date: " + hooked_browser.date;
+		hooked_browser.qtip = balloon_text;
+
+		// set zombie text label for tree node
+		var text = "";
+		text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(browser_icon) + "' /> ";
+		text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(os_icon) + "' /> ";
+		text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/" + escape(hw_icon) + "' /> ";
+
+		if (hooked_browser.country == 'Unknown') {
+			text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/unknown.png' /> ";
+		} else {
+			text += "<img width='13px' height='13px' class='zombie-tree-icon' src='<%= @base_path %>/media/images/icons/country-squared/" + escape(hooked_browser.country_code.toLowerCase()) + ".svg' /> ";
+		}
+
+		text += hooked_browser.ip;
+		hooked_browser.text = text;
 
 		//save a new online HB
 		if(online && Ext.pluck(this.online_hooked_browsers_array, 'session').indexOf(hooked_browser.session)==-1) {
+			if (<%= BeEF::Core::Configuration.instance.get("beef.extension.admin_ui.play_sound_on_new_zombie") %>) {
+				try {
+					var sound = new Audio('<%= @base_path %>/media/audio/new_zombie.mp3');
+					sound.play();
+				} catch(e) {}
+			}
+
 			this.online_hooked_browsers_array.push(hooked_browser);
 		}
 		
@@ -406,14 +669,4 @@ Ext.extend(zombiesTreeList, Ext.tree.TreePanel, {
 			this.reload();
 		}
 	},
-	
-	/*
-	 * Apply a new set of distributed engine rules to the nodes in the tree
-	 * @param: {Literal Objects} the rules set. See the zombie manager.
-	 */
-	applyRules: function(rules) {
-		//we return if the tree is not distributed
-		if(!this.tree_configuration["distributed"]) return;
-		
-	}
 });

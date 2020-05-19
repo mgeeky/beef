@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -9,25 +9,9 @@ module Models
   #
   # Table stores the webrtc signals from a hooked_browser, directed to a target_hooked_browser
   #
-  class Rtcsignal
-  
-    include DataMapper::Resource
-    
-    storage_names[:default] = 'extension_webrtc_rtcsignals'
-    
-    property :id, Serial
+  class Rtcsignal < BeEF::Core::Model
 
-    # The hooked browser id
-    property :hooked_browser_id, Text, :lazy => false
-
-    # The target hooked browser id
-    property :target_hooked_browser_id, Text, :lazy => false
-
-    # The WebRTC signal to submit. In clear text.
-    property :signal , Text, :lazy => true
-
-    # Boolean value to say if the signal has been sent to the target peer
-    property :has_sent, Text, :lazy => false, :default => "waiting"
+    belongs_to :hooked_browser
 
   end
   

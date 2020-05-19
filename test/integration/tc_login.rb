@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -12,13 +12,13 @@ class TC_Login < Test::Unit::TestCase
   include RSpec::Matchers
 
   def test_log_in
-    session = Capybara::Session.new(:selenium)
+    session = Capybara::Session.new(:selenium_headless)
     session.visit(ATTACK_URL)
     sleep 2.0
     BeefTest.save_screenshot(session)
     session.should have_title('BeEF Authentication')
-    session.fill_in 'user', :with => 'beef'
-    session.fill_in 'pass', :with => 'beef'
+    session.fill_in 'user', :with => BEEF_USER
+    session.fill_in 'pass', :with => BEEF_PASSWD
     BeefTest.save_screenshot(session)
     session.click_button('Login')
     sleep 10.0
@@ -76,13 +76,13 @@ class TC_Login < Test::Unit::TestCase
 
     attacker.should have_content(VICTIM_DOMAIN)
     attacker.should have_content('127.0.0.1')
-    attacker.click_on('127.0.0.1')
+    attacker.click_on("127.0.0.1", match: :first)
 
     sleep 1.0
 
     attacker.should have_content('Details')
     attacker.should have_content('Commands')
-    attacker.should have_content('Rider')
+    # attacker.should have_content('Rider') # Old functionality
 
     BeefTest.save_screenshot(attacker)
     BeefTest.save_screenshot(victim)

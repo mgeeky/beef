@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -23,7 +23,7 @@ beef.execute(function() {
 
 	// validate target port
 	var rport = "<%= @rport %>";
-	if (!rport || rport > 65535 || rport < 0 || isNaN(rport)) {
+	if (!beef.net.is_valid_port(rport)) {
 		beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=invalid target port');
 		return;
 	}

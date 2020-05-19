@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -19,7 +19,6 @@ module BeEF
         @options[:port] = ""
         @options[:ws_port] = ""
         @options[:interactive] = false
-
 
         @already_parsed = false
 
@@ -44,7 +43,7 @@ module BeEF
                 @options[:ascii_art] = true
               end
 
-              opts.on('-c', '--config FILE', 'Load a different configuration file: if it\'s called custom-config.yaml, git automatically ignores it.') do |f|
+              opts.on('-c', '--config FILE', "Load a different configuration file: if it's called custom-config.yaml, git automatically ignores it.") do |f|
                 @options[:ext_config] = f
               end
 
@@ -56,9 +55,9 @@ module BeEF
                 @options[:ws_port] = ws_port
               end
 
-              opts.on('-i', '--interactive', 'Starts with the Console Shell activated') do
-                @options[:interactive] = true
-              end
+              #opts.on('-i', '--interactive', 'Starts with the Console Shell activated') do
+              #  @options[:interactive] = true
+              #end
             end
 
             optparse.parse!

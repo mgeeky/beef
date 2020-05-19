@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -16,8 +16,7 @@ end
 end
 
 require 'extensions/evasion/evasion'
-require 'extensions/evasion/helper'
-require 'extensions/evasion/obfuscation/scramble'
+#require 'extensions/evasion/obfuscation/scramble'
 require 'extensions/evasion/obfuscation/minify'
 require 'extensions/evasion/obfuscation/base_64'
 require 'extensions/evasion/obfuscation/whitespace'

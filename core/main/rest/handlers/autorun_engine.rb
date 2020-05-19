@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -38,7 +38,7 @@ module BeEF
         get '/rule/delete/:rule_id' do
           begin
             rule_id = params[:rule_id]
-            rule = BeEF::Core::AutorunEngine::Models::Rule.get(rule_id)
+            rule = BeEF::Core::AutorunEngine::Models::Rule.find(rule_id)
             rule.destroy
             { 'success' => true}.to_json
           rescue => e
@@ -53,16 +53,16 @@ module BeEF
           begin
             rule_id = params[:rule_id]
 
-            online_hooks = BeEF::Core::Models::HookedBrowser.all(:lastseen.gte => (Time.new.to_i - 15))
+            online_hooks = BeEF::Core::Models::HookedBrowser.where('lastseen >= ?', (Time.new.to_i - 15))
             are = BeEF::Core::AutorunEngine::Engine.instance
 
             if online_hooks != nil
               online_hooks.each do |hb|
                 hb_details = BeEF::Core::Models::BrowserDetails
-                browser_name    = hb_details.get(hb.session, 'BrowserName')
-                browser_version = hb_details.get(hb.session, 'BrowserVersion')
-                os_name = hb_details.get(hb.session, 'OsName')
-                os_version = hb_details.get(hb.session, 'OsVersion')
+                browser_name = hb_details.get(hb.session, 'browser.name')
+                browser_version = hb_details.get(hb.session, 'browser.version')
+                os_name = hb_details.get(hb.session, 'host.os.name')
+                os_version = hb_details.get(hb.session, 'host.os.version')
 
                 match_rules = are.match(browser_name, browser_version, os_name, os_version, rule_id)
                 are.trigger(match_rules, hb.id) if match_rules.length > 0

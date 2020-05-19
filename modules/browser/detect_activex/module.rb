@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -9,6 +9,9 @@ class Detect_activex < BeEF::Core::Command
 		content = {}
 		content['activex'] = @datastore['activex']
 		save content
+    if @datastore['results'] =~ /^activex=(Yes|No)/
+      bd = BeEF::Core::Models::BrowserDetails.set(@datastore['beefhook'], 'browser.capabilities.activex', $1)
+    end
 	end
 
 end

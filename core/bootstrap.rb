@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -12,11 +12,13 @@ end
 ## @note Include the BeEF router
 require 'core/main/router/router'
 require 'core/main/router/api'
+require 'core/main/router/error_responses'
 
 
 ## @note Include http server functions for beef
 require 'core/main/server'
 require 'core/main/handlers/modules/beefjs'
+require 'core/main/handlers/modules/legacybeefjs'
 require 'core/main/handlers/modules/command'
 require 'core/main/handlers/commands'
 require 'core/main/handlers/hookedbrowsers'
@@ -29,12 +31,7 @@ require 'core/main/network_stack/handlers/raw'
 require 'core/main/network_stack/assethandler'
 require 'core/main/network_stack/api'
 
-# @note Include the distributed engine
-require 'core/main/distributed_engine/models/rules'
-
 # @note Include the autorun engine
-require 'core/main/autorun_engine/models/rule'
-require 'core/main/autorun_engine/models/execution'
 require 'core/main/autorun_engine/parser'
 require 'core/main/autorun_engine/engine'
 require 'core/main/autorun_engine/rule_loader'
@@ -48,6 +45,7 @@ require 'core/hbmanager'
 
 ## @note Include RESTful API
 require 'core/main/rest/handlers/hookedbrowsers'
+require 'core/main/rest/handlers/browserdetails'
 require 'core/main/rest/handlers/modules'
 require 'core/main/rest/handlers/categories'
 require 'core/main/rest/handlers/logs'

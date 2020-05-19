@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -32,7 +32,7 @@ module Events
       end
 
       # validates that a hooked browser with the beef_hook token exists in the db
-      zombie = Z.first(:session => beef_hook) || nil
+      zombie = Z.where(:session => beef_hook).first || nil
       if zombie.nil?
         print_error "[EVENTS] Invalid beef hook id: the hooked browser cannot be found in the database"
         return
@@ -61,6 +61,8 @@ module Events
           result = "#{event['time']}s - [User Pasted Text] \"#{event['data']}\""
         when 'blur'
           result = "#{event['time']}s - [Blur] Browser window has lost focus."
+        when 'console'
+          result = "#{event['time']}s - [Console] #{event['data']}"
         when 'keys'
           print_debug "+++++++++++++++++ Key mods: #{event['mods']}"
           print_debug "EventData: #{event['data']}"

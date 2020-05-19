@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -9,31 +9,28 @@ module BeEF
       module Dns
 
         # Represents an individual DNS rule.
-        class Rule
-          include DataMapper::Resource
-
-          storage_names[:default] = 'extension_dns_rules'
-
-          property :id, String, :key => true
-          property :pattern, Object, :required => true
-          property :resource, Object, :required => true
-          property :response, Object, :required => true
-          property :callback, Object, :required => true
+        class Rule < BeEF::Core::Model
 
           # Hooks the model's "save" event. Validates pattern/response and generates a rule identifier.
-          before :save do |rule|
+          before_save :check_rule
+          self.table_name = 'dns_rules'
+          serialize :response, Array
+
+        private
+
+          def check_rule
             begin
-              validate_pattern(rule.pattern)
-              rule.callback = format_callback(rule.resource, rule.response)
+              validate_pattern(self.pattern)
+              self.callback = format_callback(self.resource.constantize, self.response)
             rescue InvalidDnsPatternError, UnknownDnsResourceError, InvalidDnsResponseError => e
               print_error e.message
               throw :halt
             end
 
-            rule.id = BeEF::Core::Crypto.dns_rule_id
+            #self.id = BeEF::Core::Crypto.dns_rule_id
+
           end
 
-        private
           # Verifies that the given pattern is valid (i.e. non-empty, no null's or printable characters).
           def validate_pattern(pattern)
             raise InvalidDnsPatternError unless BeEF::Filters.is_non_empty_string?(pattern) &&
@@ -51,7 +48,7 @@ module BeEF
             sym_regex = /^:?(NoError|FormErr|ServFail|NXDomain|NotImp|Refused|NotAuth)$/i
 
             src = if resource == Resolv::DNS::Resource::IN::A
-              if response.is_a?(String) && BeEF::Filters.is_valid_ip?(:ipv4, response)
+              if response.is_a?(String) && BeEF::Filters.is_valid_ip?(response, :ipv4)
                 sprintf "t.respond!('%s')", response
               elsif (response.is_a?(Symbol) && response.to_s =~ sym_regex) || response =~ sym_regex
                 sprintf "t.fail!(:%s)", response.to_sym
@@ -60,7 +57,7 @@ module BeEF
                 str2 = ''
 
                 response.each do |r|
-                  raise InvalidDnsResponseError, 'A' unless BeEF::Filters.is_valid_ip?(:ipv4, r)
+                  raise InvalidDnsResponseError, 'A' unless BeEF::Filters.is_valid_ip?(r, :ipv4)
                   str2 << sprintf(str1, r)
                 end
 
@@ -69,7 +66,7 @@ module BeEF
                 raise InvalidDnsResponseError, 'A'
               end
             elsif resource == Resolv::DNS::Resource::IN::AAAA
-              if response.is_a?(String) && BeEF::Filters.is_valid_ip?(:ipv6, response)
+              if response.is_a?(String) && BeEF::Filters.is_valid_ip?(response, :ipv6)
                 sprintf "t.respond!('%s')", response
               elsif (response.is_a?(Symbol) && response.to_s =~ sym_regex) || response =~ sym_regex
                 sprintf "t.fail!(:%s)", response.to_sym
@@ -78,7 +75,7 @@ module BeEF
                 str2 = ''
 
                 response.each do |r|
-                  raise InvalidDnsResponseError, 'AAAA' unless BeEF::Filters.is_valid_ip?(:ipv6, r)
+                  raise InvalidDnsResponseError, 'AAAA' unless BeEF::Filters.is_valid_ip?(r, :ipv6)
                   str2 << sprintf(str1, r)
                 end
 

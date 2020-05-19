@@ -1,12 +1,10 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
 
-/*!
- * @literal object: beef.net
- *
+/**
  * Provides basic networking functions,
  * like beef.net.request and beef.net.forgeRequest,
  * used by BeEF command modules and the Requester extension,
@@ -15,6 +13,8 @@
  *
  * Also, it contains the core methods used by the XHR-polling
  * mechanism (flush, queue)
+ * @namespace beef.net
+ *
  */
 beef.net = {
 
@@ -82,11 +82,11 @@ beef.net = {
 
     /**
      * Queues the specified command results.
-     * @param: {String} handler: the server-side handler that will be called
-     * @param: {Integer} cid: command id
-     * @param: {String} results: the data to send
-     * @param: {Integer} status: the result of the command execution (-1, 0 or 1 for 'error', 'unknown' or 'success')
-     * @param: {Function} callback: the function to call after execution
+     * @param {String} handler the server-side handler that will be called
+     * @param {Integer} cid command id
+     * @param {String} results the data to send
+     * @param {Integer} status the result of the command execution (-1, 0 or 1 for 'error', 'unknown' or 'success')
+     * @param {Function} callback the function to call after execution
      */
     queue: function (handler, cid, results, status, callback) {
         if (typeof(handler) === 'string' && typeof(cid) === 'number' && (callback === undefined || typeof(callback) === 'function')) {
@@ -105,12 +105,12 @@ beef.net = {
      * NOTE: Always send Browser Fingerprinting results
      * (beef.net.browser_details(); -> /init handler) using normal XHR-polling,
      * even if WebSockets are enabled.
-     * @param: {String} handler: the server-side handler that will be called
-     * @param: {Integer} cid: command id
-     * @param: {String} results: the data to send
-     * @param: {Integer} exec_status: the result of the command execution (-1, 0 or 1 for 'error', 'unknown' or 'success')
-     * @param: {Function} callback: the function to call after execution
-     * @return: {Integer} exec_status: the command module execution status (defaults to 0 - 'unknown' if status is null)
+     * @param {String} handler the server-side handler that will be called
+     * @param {Integer} cid command id
+     * @param {String} results the data to send
+     * @param {Integer} exec_status the result of the command execution (-1, 0 or 1 for 'error', 'unknown' or 'success')
+     * @param {Function} callback the function to call after execution
+     * @return {Integer} the command module execution status (defaults to 0 - 'unknown' if status is null)
      */
     send: function (handler, cid, results, exec_status, callback) {
         // defaults to 'unknown' execution status if no parameter is provided, otherwise set the status
@@ -173,8 +173,8 @@ beef.net = {
 
     /**
      * Split the input data into chunk lengths determined by the amount parameter.
-     * @param: {String} str: the input data
-     * @param: {Integer} amount: chunk length
+     * @param {String} str the input data
+     * @param {Integer} amount chunk length
      */
     chunk: function (str, amount) {
         if (typeof amount == 'undefined') n = 2;
@@ -184,7 +184,7 @@ beef.net = {
     /**
      * Push the input stream back to the BeEF server-side components.
      * It uses beef.net.request to send back the data.
-     * @param: {Object} stream: the stream object to be sent back.
+     * @param {Object} stream the stream object to be sent back.
      */
     push: function (stream, callback) {
         //need to implement wait feature here eventually
@@ -203,18 +203,18 @@ beef.net = {
 
     /**
      * Performs http requests
-     * @param: {String} scheme: HTTP or HTTPS
-     * @param: {String} method: GET or POST
-     * @param: {String} domain: bindshell.net, 192.168.3.4, etc
-     * @param: {Int} port: 80, 5900, etc
-     * @param: {String} path: /path/to/resource
-     * @param: {String} anchor: this is the value that comes after the # in the URL
-     * @param: {String} data: This will be used as the query string for a GET or post data for a POST
-     * @param: {Int} timeout: timeout the request after N seconds
-     * @param: {String} dataType: specify the data return type expected (ie text/html/script)
-     * @param: {Function} callback: call the callback function at the completion of the method
+     * @param {String} scheme HTTP or HTTPS
+     * @param {String} method GET or POST
+     * @param {String} domain bindshell.net, 192.168.3.4, etc
+     * @param {Int} port 80, 5900, etc
+     * @param {String} path /path/to/resource
+     * @param {String} anchor this is the value that comes after the # in the URL
+     * @param {String} data This will be used as the query string for a GET or post data for a POST
+     * @param {Int} timeout timeout the request after N seconds
+     * @param {String} dataType specify the data return type expected (ie text/html/script)
+     * @param {Function} callback call the callback function at the completion of the method
      *
-     * @return: {Object} response: this object contains the response details
+     * @return {Object} this object contains the response details
      */
     request: function (scheme, method, domain, port, path, anchor, data, timeout, dataType, callback) {
         //check if same domain or cross domain
@@ -307,7 +307,7 @@ beef.net = {
         return response;
     },
 
-    /*
+    /**
      * Similar to beef.net.request, except from a few things that are needed when dealing with forged requests:
      *  - requestid: needed on the callback
      *  - allowCrossDomain: set cross-domain requests as allowed or blocked
@@ -320,18 +320,21 @@ beef.net = {
      */
     forge_request: function (scheme, method, domain, port, path, anchor, headers, data, timeout, dataType, allowCrossDomain, requestid, callback) {
 
-        // check if same domain or cross domain
-        var cross_domain = true;
         if (domain == "undefined" || path == "undefined") {
+            beef.debug("[beef.net.forge_request] Error: Malformed request. No host specified.");
             return;
         }
-        if (document.domain == domain.replace(/(\r\n|\n|\r)/gm, "")) { //strip eventual line breaks
+
+        // check if same domain or cross domain
+        var cross_domain = true;
+        if (document.domain == domain && document.location.protocol == scheme + ':') {
             if (document.location.port == "" || document.location.port == null) {
                 cross_domain = !(port == "80" || port == "443");
             } else {
                 if (document.location.port == port) cross_domain = false;
             }
         }
+
         // build the url
         var url = "";
         if (path.indexOf("http://") != -1 || path.indexOf("https://") != -1) {
@@ -350,13 +353,27 @@ beef.net = {
 
         // if cross-domain requests are not allowed and the request is cross-domain
         // don't proceed and return
-        if (allowCrossDomain == "false" && cross_domain && callback != null) {
+        if (allowCrossDomain == "false" && cross_domain) {
+            beef.debug("[beef.net.forge_request] Error: Cross Domain Request. The request was not sent.");
             response.status_code = -1;
             response.status_text = "crossdomain";
             response.port_status = "crossdomain";
             response.response_body = "ERROR: Cross Domain Request. The request was not sent.\n";
             response.headers = "ERROR: Cross Domain Request. The request was not sent.\n";
-            callback(response, requestid);
+            if (callback != null) callback(response, requestid);
+            return response;
+        }
+
+        // if the request was cross-domain from a HTTPS origin to HTTP
+        // don't proceed and return
+        if (document.location.protocol == 'https:' && scheme == 'http') {
+            beef.debug("[beef.net.forge_request] Error: Mixed Active Content. The request was not sent.");
+            response.status_code = -1;
+            response.status_text = "mixedcontent";
+            response.port_status = "mixedcontent";
+            response.response_body = "ERROR: Mixed Active Content. The request was not sent.\n";
+            response.headers = "ERROR: Mixed Active Content. The request was not sent.\n";
+            if (callback != null) callback(response, requestid);
             return response;
         }
 
@@ -473,8 +490,9 @@ beef.net = {
         return response;
     },
 
-    //this is a stub, as associative arrays are not parsed by JSON, all key / value pairs should use new Object() or {}
-    //http://andrewdupont.net/2006/05/18/javascript-associative-arrays-considered-harmful/
+    /** this is a stub, as associative arrays are not parsed by JSON, all key / value pairs should use new Object() or {}
+     *  http://andrewdupont.net/2006/05/18/javascript-associative-arrays-considered-harmful/
+     */
     clean: function (r) {
         if (this.array_has_string_key(r)) {
             var obj = {};
@@ -485,7 +503,7 @@ beef.net = {
         return r;
     },
 
-    //Detects if an array has a string key
+    /** Detects if an array has a string key */
     array_has_string_key: function (arr) {
         if ($j.isArray(arr)) {
             try {
@@ -498,12 +516,46 @@ beef.net = {
     },
 
     /**
+     * Checks if the specified port is valid
+     */
+    is_valid_port: function (port) {
+      if (isNaN(port)) return false;
+      if (port > 65535 || port < 0) return false;
+      return true;
+    },
+
+    /**
+     * Checks if the specified IP address is valid
+     */
+    is_valid_ip: function (ip) {
+      if (ip == null) return false;
+      var ip_match = ip.match('^([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$');
+      if (ip_match == null) return false;
+      return true;
+    },
+
+    /**
+     * Checks if the specified IP address range is valid
+     */
+    is_valid_ip_range: function (ip_range) {
+      if (ip_range == null) return false;
+      var range_match = ip_range.match('^([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\-([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))\.([0-9]|[1-9][0-9]|1([0-9][0-9])|2([0-4][0-9]|5[0-5]))$');
+      if (range_match == null || range_match[1] == null) return false;
+      return true;
+    },
+
+    /**
      * Sends back browser details to framework, calling beef.browser.getDetails()
      */
     browser_details: function () {
         var details = beef.browser.getDetails();
+        var res = null;
         details['HookSessionID'] = beef.session.get_hook_session_id();
         this.send('/init', 0, details);
+        if(details != null)
+            res = true;
+
+        return res;
     }
 
 };

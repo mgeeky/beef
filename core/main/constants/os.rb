@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -29,7 +29,7 @@ module BeEF
         OS_IOS_UA_STR = 'iOS'
         OS_IOS_IMG = 'ios.png'
         OS_IPHONE_UA_STR = 'iPhone'
-        OS_WEBOS_UA_STR = 'webos.png'
+        OS_WEBOS_IMG = 'webos.png'
         OS_AROS_UA_STR = 'AROS'
         OS_AROS_IMG = 'icaros.png'
         OS_IPHONE_IMG = 'iphone.jpg'

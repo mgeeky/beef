@@ -1,5 +1,5 @@
 //
-// Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+// Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 // Browser Exploitation Framework (BeEF) - http://beefproject.com
 // See the file 'doc/COPYING' for copying permission
 //
@@ -18,7 +18,7 @@ ZombieTab_Network = function(zombie) {
 	// get module ID from name
 	var get_module_id = function(name){
 		var id = "";
-		$jwterm.ajax({
+		jQuery.ajax({
 			type: 'GET',
 			url: "/api/modules/search/" + name + "?token=" + token,
 			async: false,
@@ -50,7 +50,7 @@ ZombieTab_Network = function(zombie) {
 
 		var hosts = null;
 		var url = '/api/network/hosts/'+zombie.session+'?token='+token;
-		$jwterm.ajax({
+		jQuery.ajax({
 			contentType: 'application/json',
 			dataType: 'json',
 			type: 'GET',
@@ -80,11 +80,10 @@ ZombieTab_Network = function(zombie) {
 		}
 
 		nodes.push({id: 1000, label: '', image: DIR + '../beef.png', shape: 'image'});
-		nodes.push({id: 1001, label: '', image: DIR + 'System-Firewall-2-icon.png', shape: 'image'});
-		edges.push({from: 1000, to: 1001, length: EDGE_LENGTH_SUB});
-		var HB_ID = 1002;
+
+		var HB_ID = 1001;
 		nodes.push({id: HB_ID, label: 'Hooked Browser', image: DIR + 'Apps-internet-web-browser-icon.png', shape: 'image'});
-		edges.push({from: 1001, to: HB_ID, length: EDGE_LENGTH_SUB});
+		edges.push({from: 1000, to: HB_ID, length: EDGE_LENGTH_SUB});
 
 		// add subnet nodes
 		var subnets = [];
@@ -194,7 +193,7 @@ ZombieTab_Network = function(zombie) {
 			{header: 'Type', width: 15, sortable: true, dataIndex: 'type', renderer: function(value){return $jEncoder.encoder.encodeForHTML(value)}},
 			{header: 'Operating System', width: 10, sortable: true, dataIndex: 'os', renderer: function(value){return $jEncoder.encoder.encodeForHTML(value)}},
 			{header: 'MAC Address', width: 10, sortable: true, dataIndex: 'mac', renderer: function(value){return $jEncoder.encoder.encodeForHTML(value)}},
-                        {header: 'Last Seen', width: 15, sortable: true, dataIndex: 'lastseen', renderer: function(value){return $jEncoder.encoder.encodeForHTML(value)}}
+                        {header: 'Last Seen', width: 15, sortable: true, dataIndex: 'lastseen', renderer: function(value){return $jEncoder.encoder.encodeForHTML(new Date(1000*value).toUTCString())}}
 		],
 		
 		listeners: {
@@ -214,7 +213,7 @@ ZombieTab_Network = function(zombie) {
 						handler: function() {
 							var mod_id = get_module_id("get_internal_ip_webrtc");
 							commands_statusbar.update_sending('Identifying zombie network adapters ...');
-							$jwterm.ajax({
+							jQuery.ajax({
 								contentType: 'application/json',
 								data: JSON.stringify({}),
 								dataType: 'json',
@@ -236,7 +235,7 @@ ZombieTab_Network = function(zombie) {
                                                 handler: function() {
                                                         var mod_id = get_module_id("get_proxy_servers_wpad");
                                                         commands_statusbar.update_sending('Scanning for WPAD proxies ...');
-                                                        $jwterm.ajax({
+                                                        jQuery.ajax({
                                                                 contentType: 'application/json',
                                                                 data: JSON.stringify({}),
                                                                 dataType: 'json',
@@ -258,7 +257,7 @@ ZombieTab_Network = function(zombie) {
 						handler: function() {
 							var mod_id = get_module_id("fingerprint_routers");
 							commands_statusbar.update_sending('Scanning commonly used local area network IP addresses for routers ...');
-							$jwterm.ajax({
+							jQuery.ajax({
 								contentType: 'application/json',
 								data: JSON.stringify({}),
 								dataType: 'json',
@@ -291,9 +290,9 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
 								commands_statusbar.update_sending('Favicon scanning commonly used local area network IP addresses for web servers [ports: '+ports+'] ...');
-								$jwterm.ajax({
+								jQuery.ajax({
 									contentType: 'application/json',
-									data: JSON.stringify({"ipRange":"common","ports":ports}),
+									data: JSON.stringify({"rhosts":"common","ports":ports}),
 									dataType: 'json',
 									type: 'POST',
 									url: "/api/modules/" + zombie.session + "/" + mod_id + "?token=" + token,
@@ -311,7 +310,7 @@ ZombieTab_Network = function(zombie) {
 							text: 'Specify IP Range',
 							iconCls: 'network-host-ctxMenu-config',
 							handler: function() {
-								var ip_range = prompt("Enter IP range to scan:", '192.168.1.1-192.168.1.254');
+								var ip_range = prompt("Enter IPs to scan:", '192.168.1.1-192.168.1.254');
 								if (!ip_range) {
 									commands_statusbar.update_fail('Cancelled');
 									return;
@@ -324,9 +323,9 @@ ZombieTab_Network = function(zombie) {
 								var mod_name = "get_http_servers";
 								var mod_id = get_module_id(mod_name);
 								commands_statusbar.update_sending('Favicon scanning ' + ip_range + ' for web servers...');
-								$jwterm.ajax({
+								jQuery.ajax({
 									contentType: 'application/json',
-									data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
+									data: JSON.stringify({"rhosts":ip_range,"ports":ports}),
 									dataType: 'json',
 									type: 'POST',
 									url: "/api/modules/" + zombie.session + "/" + mod_id + "?token=" + token,
@@ -354,7 +353,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_name = "internal_network_fingerprinting";
                                                                 var mod_id = get_module_id(mod_name);
                                                                 commands_statusbar.update_sending('Fingerprinting commonly used local area network IP addresses...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":"common"}),
                                                                         dataType: 'json',
@@ -382,7 +381,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_name = "internal_network_fingerprinting";
                                                                 var mod_id = get_module_id(mod_name);
                                                                 commands_statusbar.update_sending('Fingerprinting ' + ip_range + '...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":ip_range}),
                                                                         dataType: 'json',
@@ -417,7 +416,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('CORS scanning commonly used local area network IP addresses [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":"common","ports":ports}),
                                                                         dataType: 'json',
@@ -450,7 +449,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_name = "cross_origin_scanner_cors";
                                                                 var mod_id = get_module_id(mod_name);
                                                                 commands_statusbar.update_sending('CORS scanning ' + ip_range + ' [ports: ' + ports + '] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
                                                                         dataType: 'json',
@@ -485,7 +484,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('Flash cross-origin scanning commonly used local area network IP addresses [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":"common","ports":ports}),
                                                                         dataType: 'json',
@@ -518,7 +517,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_name = "cross_origin_scanner_flash";
                                                                 var mod_id = get_module_id(mod_name);
                                                                 commands_statusbar.update_sending('Flash cross-origin scanning ' + ip_range + ' [ports: ' + ports + '] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
                                                                         dataType: 'json',
@@ -565,9 +564,9 @@ ZombieTab_Network = function(zombie) {
                                                 return;
                                               }
                                             commands_statusbar.update_sending('Favicon scanning ' + ip + ' for HTTP servers [ports: '+ports+'] ...');
-                                            $jwterm.ajax({
+                                            jQuery.ajax({
                                               contentType: 'application/json',
-                                              data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
+                                              data: JSON.stringify({"rhosts":ip,"ports":ports}),
                                               dataType: 'json',
                                               type: 'POST',
                                               url: "/api/modules/" + zombie.session + "/" + mod_id + "?token=" + token,
@@ -587,7 +586,7 @@ ZombieTab_Network = function(zombie) {
                                           handler: function() {
                                             var mod_id = get_module_id("internal_network_fingerprinting");
                                             commands_statusbar.update_sending('Fingerprinting ' + ip + '...');
-                                            $jwterm.ajax({
+                                            jQuery.ajax({
                                               contentType: 'application/json',
                                               data: JSON.stringify({"ipRange":ip+'-'+ip}),
                                               dataType: 'json',
@@ -614,7 +613,7 @@ ZombieTab_Network = function(zombie) {
                                               return;
                                             }
                                             commands_statusbar.update_sending('CORS scanning ' + ip + ' [ports: '+ports+'] ...');
-                                            $jwterm.ajax({
+                                            jQuery.ajax({
                                               contentType: 'application/json',
                                               data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
                                               dataType: 'json',
@@ -641,7 +640,7 @@ ZombieTab_Network = function(zombie) {
                                               return;
                                             }
                                             commands_statusbar.update_sending('Flash cross-origin scanning ' + ip + ' [ports: '+ports+'] ...');
-                                            $jwterm.ajax({
+                                            jQuery.ajax({
                                               contentType: 'application/json',
                                               data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
                                               dataType: 'json',
@@ -669,7 +668,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_id = get_module_id("port_scanner");
                                                                 var ports = '21,22,23,25,80,81,443,445,1080,8080,8081,8090,8443,3000,3128,3389,3306,5432,6379,10000,10443';
                                                                 commands_statusbar.update_sending('Port scanning ' + ip + '...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipHost":ip,"ports":ports}),
                                                                         dataType: 'json',
@@ -696,7 +695,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('Port scanning ' + ip + '...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipHost":ip,"ports":ports}),
                                                                         dataType: 'json',
@@ -736,9 +735,9 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('Favicon scanning ' + ip + ' for HTTP servers [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
-                                                                        data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
+                                                                        data: JSON.stringify({"rhosts":ip,"ports":ports}),
                                                                         dataType: 'json',
                                                                         type: 'POST',
                                                                         url: "/api/modules/" + zombie.session + "/" + mod_id + "?token=" + token,
@@ -763,9 +762,9 @@ ZombieTab_Network = function(zombie) {
                                                                 }
                                                                 var mod_id = get_module_id("get_http_servers");
                                                                 commands_statusbar.update_sending('Favicon scanning ' + ip_range + ' for HTTP servers [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
-                                                                        data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
+                                                                        data: JSON.stringify({"rhosts":ip_range,"ports":ports}),
                                                                         dataType: 'json',
                                                                         type: 'POST',
                                                                         url: "/api/modules/" + zombie.session + "/" + mod_id + "?token=" + token,
@@ -792,7 +791,7 @@ ZombieTab_Network = function(zombie) {
                                                 	handler: function() {
                                                         	var mod_id = get_module_id("internal_network_fingerprinting");
                                                         	commands_statusbar.update_sending('Fingerprinting ' + ip + '...');
-                                                        	$jwterm.ajax({
+                                                        	jQuery.ajax({
                                                                 	contentType: 'application/json',
                                                                 	data: JSON.stringify({"ipRange":ip+'-'+ip}),
 	                                                                dataType: 'json',
@@ -814,7 +813,7 @@ ZombieTab_Network = function(zombie) {
                                                         handler: function() {
 	                                                        var mod_id = get_module_id("internal_network_fingerprinting");
 	                                                        commands_statusbar.update_sending('Fingerprinting ' + ip_range + '...');
-	                                                        $jwterm.ajax({
+	                                                        jQuery.ajax({
 	                                                                contentType: 'application/json',
 	                                                                data: JSON.stringify({"ipRange":ip_range}),
 	                                                                dataType: 'json',
@@ -848,7 +847,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
 	                                                        commands_statusbar.update_sending('CORS scanning ' + ip + ' [ports: '+ports+'] ...');
-	                                                        $jwterm.ajax({
+	                                                        jQuery.ajax({
 	                                                                contentType: 'application/json',
 	                                                                data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
 	                                                                dataType: 'json',
@@ -875,7 +874,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
 	                                                        commands_statusbar.update_sending('CORS scanning ' + ip_range + ' [ports: '+ports+'] ...');
-	                                                        $jwterm.ajax({
+	                                                        jQuery.ajax({
 	                                                                contentType: 'application/json',
 	                                                                data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
 	                                                                dataType: 'json',
@@ -909,7 +908,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('Flash cross-origin scanning ' + ip + ' [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":ip+'-'+ip,"ports":ports}),
                                                                         dataType: 'json',
@@ -936,7 +935,7 @@ ZombieTab_Network = function(zombie) {
                                                                         return;
                                                                 }
                                                                 commands_statusbar.update_sending('Flash cross-origin scanning ' + ip_range + ' [ports: '+ports+'] ...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipRange":ip_range,"ports":ports}),
                                                                         dataType: 'json',
@@ -966,7 +965,7 @@ ZombieTab_Network = function(zombie) {
                                                                 var mod_id = get_module_id("port_scanner");
                                                                 var ports = '21,22,23,25,80,81,443,445,1080,8080,8081,8090,8443,3000,3128,3389,3306,5432,6379,10000,10443';
                                                                 commands_statusbar.update_sending('Port scanning ' + ip + '...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipHost":ip,"ports":ports}),
                                                                         dataType: 'json',
@@ -993,7 +992,7 @@ ZombieTab_Network = function(zombie) {
 									return;
 								}       
                                                                 commands_statusbar.update_sending('Port scanning ' + ip + '...');
-                                                                $jwterm.ajax({
+                                                                jQuery.ajax({
                                                                         contentType: 'application/json',
                                                                         data: JSON.stringify({"ipHost":ip,"ports":ports}),
                                                                         dataType: 'json',
@@ -1024,7 +1023,7 @@ ZombieTab_Network = function(zombie) {
 							}
 
 							commands_statusbar.update_sending('Removing network host [id: '+ host_id +', ip: '+ ip +'] ...');
-							$jwterm.ajax({
+							jQuery.ajax({
 								contentType: 'application/json',
 								dataType: 'json',
 								type: 'DELETE',
@@ -1149,7 +1148,7 @@ ZombieTab_Network = function(zombie) {
                                             handler: function () {
                                                 var mod_id = get_module_id("internal_network_fingerprinting");
                                                 commands_statusbar.update_sending('Fingerprinting ' + ip + '...');
-                                                $jwterm.ajax({
+                                                jQuery.ajax({
                                                     contentType: 'application/json',
                                                     data: JSON.stringify({"ipRange": ip + '-' + ip, "ports": port}),
                                                     dataType: 'json',
@@ -1171,7 +1170,7 @@ ZombieTab_Network = function(zombie) {
                                             handler: function () {
                                                 var mod_id = get_module_id("cross_origin_scanner_cors");
                                                 commands_statusbar.update_sending('CORS scanning ' + ip + ' [port: '+port+'] ...');
-                                                $jwterm.ajax({
+                                                jQuery.ajax({
                                                     contentType: 'application/json',
                                                     data: JSON.stringify({"ipRange": ip + '-' + ip, "ports": port}),
                                                     dataType: 'json',
@@ -1204,7 +1203,7 @@ ZombieTab_Network = function(zombie) {
                                                 }
                                                 alert("Now start your reverse shell handler on " + lhost + ':' + lport);
                                                 commands_statusbar.update_sending('Shellshock scanning ' + ip + '...');
-                                                $jwterm.ajax({
+                                                jQuery.ajax({
                                                     contentType: 'application/json',
                                                     data: JSON.stringify({
                                                         "rproto": proto,
@@ -1243,7 +1242,7 @@ ZombieTab_Network = function(zombie) {
                                                 }
                                                 alert("Now start your reverse shell handler on " + lhost + ':' + lport);
                                                 commands_statusbar.update_sending('Shellshock scanning ' + ip + '...');
-                                                $jwterm.ajax({
+                                                jQuery.ajax({
                                                     contentType: 'application/json',
                                                     data: JSON.stringify({
                                                         "rproto": proto,

@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -150,7 +150,7 @@ class Core
           'Hardware'
         ])
     
-    BeEF::Core::Models::HookedBrowser.all(:lastseen.gte => (Time.new.to_i - 30)).each do |zombie|
+    BeEF::Core::Models::HookedBrowser.where('lastseen >= ?', (Time.new.to_i - 30)).each do |zombie|
       tbl << [zombie.id,zombie.ip,BeEF::Core::Models::BrowserDetails.get(zombie.session,"HostName").to_s,BeEF::Core::Models::BrowserDetails.get(zombie.session, 'BrowserName').to_s+"-"+BeEF::Core::Models::BrowserDetails.get(zombie.session, 'BrowserVersion').to_s,BeEF::Core::Models::BrowserDetails.get(zombie.session, 'OsName'),BeEF::Core::Models::BrowserDetails.get(zombie.session, 'Hardware')]
     end
     
@@ -184,7 +184,7 @@ class Core
           'Hardware'
         ])
     
-    BeEF::Core::Models::HookedBrowser.all(:lastseen.lt => (Time.new.to_i - 30)).each do |zombie|
+    BeEF::Core::Models::HookedBrowser.where('lastseen < ?', (Time.new.to_i - 30)).each do |zombie|
       tbl << [zombie.id,zombie.ip,BeEF::Core::Models::BrowserDetails.get(zombie.session,"HostName").to_s,BeEF::Core::Models::BrowserDetails.get(zombie.session, 'BrowserName').to_s+"-"+BeEF::Core::Models::BrowserDetails.get(zombie.session, 'BrowserVersion').to_s,BeEF::Core::Models::BrowserDetails.get(zombie.session, 'OsName'),BeEF::Core::Models::BrowserDetails.get(zombie.session, 'Hardware')]
     end
     
@@ -213,7 +213,7 @@ class Core
     end
     
     onlinezombies = []
-    BeEF::Core::Models::HookedBrowser.all(:lastseen.gt => (Time.new.to_i - 30)).each do |zombie|
+    BeEF::Core::Models::HookedBrowser.where('lastseen > ?', (Time.new.to_i - 30)).each do |zombie|
       onlinezombies << zombie.id
     end
 
@@ -268,7 +268,7 @@ class Core
     end
 
     onlinezombies = []
-    BeEF::Core::Models::HookedBrowser.all(:lastseen.gt => (Time.new.to_i - 30)).each do |z|
+    BeEF::Core::Models::HookedBrowser.where('lastseen > ?' (Time.new.to_i - 30)).each do |z|
       onlinezombies << z.id
     end
 
@@ -400,7 +400,7 @@ class Core
     end
     
     offlinezombies = []
-    BeEF::Core::Models::HookedBrowser.all(:lastseen.lt => (Time.new.to_i - 30)).each do |zombie|
+    BeEF::Core::Models::HookedBrowser.where('lastseen < ?', (Time.new.to_i - 30)).each do |zombie|
       offlinezombies << zombie.id
     end
     
@@ -507,20 +507,7 @@ class Core
     target_opts = %w{commands}
     print_status("If you're targeting a module, you can also specify: #{target_opts.join(", ")}")
   end
-  
-  def beef_logo_to_os(logo)
-	  case logo
-    when "mac.png"
-      hbos = "Mac OS X"
-    when "linux.png"
-      hbos = "Linux"
-    when "win.png"
-      hbos = "Microsoft Windows"
-    when "unknown.png"
-      hbos = "Unknown"
-    end
-  end
-  
+
 end
 
 end end end end

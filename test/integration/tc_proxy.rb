@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -25,9 +25,11 @@ class TC_Proxy < Test::Unit::TestCase
       @@proxy_config = config.get('beef.extension.proxy')
       @@proxy = "#{@@proxy_config['address']}:#{@@proxy_config['port']}"
 
-      # set up datamapper
-      DataMapper.setup(:default, 'sqlite3::memory:')
-      DataMapper.auto_migrate!
+      # set up active record
+      ActiveRecord::Base.establish_connection(
+        database: "beef.db"
+        adapter:	"sqlite3"
+      )
 
       # set headers for rest requests
       @@headers = { :content_type => :json, :accept => :json }

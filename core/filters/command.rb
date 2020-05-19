@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -13,15 +13,6 @@ module Filters
     return false if str.nil?
     return false unless str.is_a? String
     return false if has_non_printable_char?(str)
-    true
-  end
-
-  # Check if the command id valid
-  # @param [String] str String for testing
-  # @return [Boolean] If the string is a valid command id
-  def self.is_valid_command_id?(str)
-    return false unless is_non_empty_string?(str)
-    return false unless nums_only?(str)   
     true
   end
 

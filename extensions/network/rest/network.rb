@@ -1,15 +1,13 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
 module BeEF
   module Extension
     module Network
-
       # This class handles the routing of RESTful API requests that interact with network services on the zombie's LAN
       class NetworkRest < BeEF::Core::Router::Router
-
         # Filters out bad requests before performing any routing
         before do
           config = BeEF::Core::Configuration.instance
@@ -29,12 +27,16 @@ module BeEF
         # Returns the entire list of network hosts for all zombies
         get '/hosts' do
           begin
-            hosts = @nh.all(:unique => true, :order => [:id.asc])
+            hosts = @nh.all.distinct.order(:id)
             count = hosts.length
 
             result = {}
             result[:count] = count
-            result[:hosts] = hosts.to_json
+            result[:hosts] = []
+            hosts.each do |host|
+              result[:hosts] << host.to_h
+            end
+
             result.to_json
           rescue StandardError => e
             print_error "Internal error while retrieving host list (#{e.message})"
@@ -45,12 +47,16 @@ module BeEF
         # Returns the entire list of network services for all zombies
         get '/services' do
           begin
-            services = @ns.all(:unique => true, :order => [:id.asc])
+            services = @ns.all.distinct.order(:id)
             count = services.length
 
             result = {}
             result[:count] = count
-            result[:services] = services.to_json
+            result[:services] = []
+            services.each do |service|
+              result[:services] << service.to_h
+            end
+
             result.to_json
           rescue StandardError => e
             print_error "Internal error while retrieving service list (#{e.message})"
@@ -63,12 +69,16 @@ module BeEF
           begin
             id = params[:id]
 
-            hosts = @nh.all(:hooked_browser_id => id, :unique => true, :order => [:id.asc])
+            hosts = @nh.where(hooked_browser_id: id).distinct.order(:id)
             count = hosts.length
 
             result = {}
             result[:count] = count
-            result[:hosts] = hosts
+            result[:hosts] = []
+            hosts.each do |host|
+              result[:hosts] << host.to_h
+            end
+
             result.to_json
           rescue InvalidParamError => e
             print_error e.message
@@ -84,12 +94,16 @@ module BeEF
           begin
             id = params[:id]
 
-            services = @ns.all(:hooked_browser_id => id, :unique => true, :order => [:id.asc])
+            services = @ns.where(hooked_browser_id: id).distinct.order(:id)
             count = services.length
 
             result = {}
             result[:count] = count
-            result[:services] = services
+            result[:services] = []
+            services.each do |service|
+              result[:services] << service.to_h
+            end
+
             result.to_json
           rescue InvalidParamError => e
             print_error e.message
@@ -105,11 +119,11 @@ module BeEF
           begin
             id = params[:id]
 
-            host = @nh.all(:id => id)
+            host = @nh.find(id)
             raise InvalidParamError, 'id' if host.nil?
             halt 404 if host.empty?
 
-            host.to_json
+            host.to_h.to_json
           rescue InvalidParamError => e
             print_error e.message
             halt 400
@@ -119,13 +133,13 @@ module BeEF
           end
         end
 
-        # Removes a specific host given its id
+        # Deletes a specific host given its id
         delete '/host/:id' do
           begin
             id = params[:id]
-            raise InvalidParamError, 'id' if id !~ /\A\d+\z/
+            raise InvalidParamError, 'id' unless BeEF::Filters.nums_only?(id)
 
-            host = @nh.all(:id => id)
+            host = @nh.find(id)
             halt 404 if host.nil?
 
             result = {}
@@ -145,11 +159,11 @@ module BeEF
           begin
             id = params[:id]
 
-            service = @ns.all(:id => id)
+            service = @ns.find(id)
             raise InvalidParamError, 'id' if service.nil?
             halt 404 if service.empty?
 
-            service.to_json
+            service.to_h.to_json
           rescue InvalidParamError => e
             print_error e.message
             halt 400
@@ -161,30 +175,23 @@ module BeEF
 
         # Raised when invalid JSON input is passed to an /api/network handler.
         class InvalidJsonError < StandardError
-
-          DEFAULT_MESSAGE = 'Invalid JSON input passed to /api/network handler'
+          DEFAULT_MESSAGE = 'Invalid JSON input passed to /api/network handler'.freeze
 
           def initialize(message = nil)
             super(message || DEFAULT_MESSAGE)
           end
-
         end
 
         # Raised when an invalid named parameter is passed to an /api/network handler.
         class InvalidParamError < StandardError
-
-          DEFAULT_MESSAGE = 'Invalid parameter passed to /api/network handler'
+          DEFAULT_MESSAGE = 'Invalid parameter passed to /api/network handler'.freeze
 
           def initialize(message = nil)
-            str = "Invalid \"%s\" parameter passed to /api/network handler"
-            message = sprintf str, message unless message.nil?
+            message = "Invalid \"#{message}\" parameter passed to /api/network handler" unless message.nil?
             super(message)
           end
-
         end
-
       end
-
     end
   end
 end

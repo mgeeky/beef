@@ -1,7 +1,7 @@
 class BeefRestAPI
 
 # initialize
-def initialize proto = 'http', host = '127.0.0.1', port = '3000', user = 'beef', pass = 'beef'
+def initialize proto = 'https', host = '127.0.0.1', port = '3000', user = 'beef', pass = 'beef'
   @user = user
   @pass = pass
   @url = "#{proto}://#{host}:#{port}/api/"
@@ -41,6 +41,18 @@ def version
   end
 end
 
+# get server mounts
+def mounts
+  begin
+    response = RestClient.get "#{@url}server/mounts", {:params => {:token => @token}}
+    result = JSON.parse(response.body)
+    print_good "Retrieved BeEF server mounts: #{result['mounts']}"
+    result['mounts']
+  rescue => e
+    print_error "Could not retrieve BeEF version: #{e.message}"
+  end
+end
+
 # get online hooked browsers
 def online_browsers
   begin
@@ -55,16 +67,43 @@ def online_browsers
   end
 end
 
+# get offline hooked browsers
+def offline_browsers 
+  begin
+    print_verbose "Retrieving offline browsers"
+    response = RestClient.get "#{@url}hooks", {:params => {:token => @token}}
+    result = JSON.parse(response.body)
+    browsers = result["hooked-browsers"]["offline"]
+    print_good "Retrieved offline browser list [#{browsers.size} offline]"
+    browsers
+  rescue => e
+    print_error "Could not retrieve browser details: #{e.message}"
+  end
+end
+
 # get hooked browser details by session
 def browser_details session
   begin
-    print_verbose "Retrieving details for hooked browser [session: #{session}]"
-    response = RestClient.get "#{@url}hooks/#{session}", {:params => {:token => @token}}
-    details = JSON.parse(response.body)
-    print_good "Retrieved browser details for #{details['IP']}"
+    print_verbose "Retrieving browser details for hooked browser [session: #{session}]"
+    response = RestClient.get "#{@url}browserdetails/#{session}", {:params => {:token => @token}}
+    result = JSON.parse(response.body)
+    details = result['details']
+    print_good "Retrieved #{details.size} browser details"
     details
   rescue => e
     print_error "Could not retrieve browser details: #{e.message}"
+  end
+end
+
+# delete a browser by session
+def delete_browser session
+  begin
+    print_verbose "Removing hooked browser [session: #{session}]"
+    response = RestClient.get "#{@url}hooks/#{session}/delete", {:params => {:token => @token}}
+    print_good "Removed browser [session: #{session}]" if response.code == 200
+    response
+  rescue => e
+    print_error "Could not delete hooked browser: #{e.message}"
   end
 end
 
@@ -310,6 +349,57 @@ def network_services session
   end
 end
 
+
+################################################################################
+### XssRays API
+################################################################################
+
+# get all rays
+def xssrays_rays_all
+  print_verbose "Retrieving all rays"
+  response = RestClient.get "#{@url}xssrays/rays", {:params => {:token => @token}}
+  details = JSON.parse(response.body)
+  print_good "Retrieved #{details['count']} rays"
+  details
+rescue => e
+  print_error "Could not retrieve rays: #{e.message}"
+end
+
+# get rays by session
+def xssrays_rays session
+  print_verbose "Retrieving rays for hooked browser [session: #{session}]"
+  response = RestClient.get "#{@url}xssrays/rays/#{session}", {:params => {:token => @token}}
+  details = JSON.parse(response.body)
+  print_good "Retrieved #{details['count']} rays"
+  details
+rescue => e
+  print_error "Could not retrieve rays: #{e.message}"
+end
+
+# get all scans
+def xssrays_scans_all
+  print_verbose "Retrieving all scans"
+  response = RestClient.get "#{@url}xssrays/scans", {:params => {:token => @token}}
+  details = JSON.parse(response.body)
+  print_good "Retrieved #{details['count']} scans"
+  details
+rescue => e
+  print_error "Could not retrieve scans: #{e.message}"
+end
+
+# get scans by session
+def xssrays_scans session
+  print_verbose "Retrieving scans for hooked browser [session: #{session}]"
+  response = RestClient.get "#{@url}xssrays/scans/#{session}", {:params => {:token => @token}}
+  details = JSON.parse(response.body)
+  print_good "Retrieved #{details['count']} scans"
+  details
+rescue => e
+  print_error "Could not retrieve scans: #{e.message}"
+end
+
+
+
 ################################################################################
 ### DNS API
 ################################################################################
@@ -326,6 +416,51 @@ def dns_ruleset
     print_error "Could not retrieve DNS ruleset: #{e.message}"
   end
 end
+
+# add a rule
+def dns_add_rule(dns_pattern, dns_resource, dns_response)
+  dns_response = [dns_response] if dns_response.is_a?(String)
+  begin
+    print_verbose "Adding DNS rule [pattern: #{dns_pattern}, resource: #{dns_resource}, response: #{dns_response}]"
+    response = RestClient.post "#{@url}dns/rule?token=#{@token}", {
+      'pattern' => dns_pattern,
+      'resource' => dns_resource,
+      'response' => dns_response }.to_json,
+    :content_type => :json,
+    :accept => :json
+    details = JSON.parse(response.body)
+    print_good "Added rule [id: #{details['id']}]"
+    details
+  rescue => e
+    print_error "Could not add DNS rule: #{e.message}"
+  end
+end
+
+# get rule details
+def dns_get_rule(id)
+  begin
+    print_verbose "Retrieving DNS rule details [id: #{id}]"
+    response = RestClient.get "#{@url}dns/rule/#{id}", {:params => {:token => @token}}
+    details = JSON.parse(response.body)
+    print_good "Retrieved rule [id: #{details['id']}]"
+    details
+  rescue => e
+    print_error "Could not retrieve DNS rule: #{e.message}"
+  end
+end
+
+# delete a rule
+def dns_delete_rule(id)
+  begin
+    response = RestClient.delete "#{@url}dns/rule/#{id}?token=#{@token}"
+    details = JSON.parse(response.body)
+    print_good "Deleted rule [id: #{id}]"
+    details
+  rescue => e
+    print_error "Could not delete DNS rule: #{e.message}"
+  end
+end
+
 
 ################################################################################
 ### WebRTC

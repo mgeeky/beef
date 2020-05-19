@@ -1,5 +1,5 @@
 #
-# Copyright (c) 2006-2016 Wade Alcorn - wade@bindshell.net
+# Copyright (c) 2006-2020 Wade Alcorn - wade@bindshell.net
 # Browser Exploitation Framework (BeEF) - http://beefproject.com
 # See the file 'doc/COPYING' for copying permission
 #
@@ -7,13 +7,11 @@ module BeEF
   module Extension
     module Dns
 
-      # @todo Add option for configuring upstream servers.
-
       # Provides the core DNS nameserver functionality. The nameserver handles incoming requests
       # using a rule-based system. A list of user-defined rules is used to match against incoming
       # DNS requests. These rules generate a response that is either a resource record or a
       # failure code.
-      class Server < RubyDNS::Server
+      class Server < Async::DNS::Server
 
         include Singleton
 
@@ -50,9 +48,10 @@ module BeEF
             pattern = Regexp.new(rule[:pattern], Regexp::IGNORECASE)
             $VERBOSE = verbose
 
-            @database.first_or_create(
-              { :resource => rule[:resource], :pattern => pattern.source },
-              { :response => rule[:response] }
+            @database.find_or_create_by(
+              :resource => rule[:resource].to_s,
+              :pattern => pattern.source,
+              :response => rule[:response]
             ).id
           end
         end
@@ -64,9 +63,11 @@ module BeEF
         # @return [Hash] hash representation of rule (empty hash if rule wasn't found)
         def get_rule(id)
           @lock.synchronize do
-            if is_valid_id?(id)
-              rule = @database.get(id)
-              rule.nil? ? {} : to_hash(rule)
+            begin
+              rule = @database.find(id)
+              return to_hash(rule)
+            rescue ActiveRecord::RecordNotFound
+              return nil
             end
           end
         end
@@ -78,10 +79,15 @@ module BeEF
         # @return [Boolean] true if rule was removed, otherwise false
         def remove_rule!(id)
           @lock.synchronize do
-            if is_valid_id?(id)
-              rule = @database.get(id)
-              rule.nil? ? false : rule.destroy
+            begin
+              rule = @database.find(id)
+              if not rule.nil? and rule.destroy
+                return true
+              end
+            rescue ActiveRecord::RecordNotFound
+              return nil
             end
+            return false
           end
         end
 
@@ -96,14 +102,18 @@ module BeEF
         #
         # @return [Array<Hash>] DNS ruleset (empty array if no rules are currently defined)
         def get_ruleset
-          @lock.synchronize { @database.collect { |rule| to_hash(rule) } }
+          @lock.synchronize { @database.all { |rule| to_hash(rule) } }
         end
 
         # Removes the entire DNS ruleset.
         #
         # @return [Boolean] true if ruleset was destroyed, otherwise false
         def remove_ruleset!
-          @lock.synchronize { @database.destroy }
+          @lock.synchronize do 
+            if @database.destroy_all
+              return true
+            end
+          end
         end
 
         # Starts the DNS server.
@@ -117,26 +127,31 @@ module BeEF
             Thread.new do
               EventMachine.next_tick do
                 upstream = options[:upstream] || nil
+
                 listen = options[:listen] || nil
+                # listen is called enpoints in Async::DNS
+                @endpoints = listen
 
                 if upstream
-                  resolver = RubyDNS::Resolver.new(upstream)
+                  resolver = Async::DNS::Resolver.new(upstream)
                   @otherwise = Proc.new { |t| t.passthrough!(resolver) }
                 end
 
                 begin
-                  super(:listen => listen)
-                rescue RuntimeError => e
-                  if e.message =~ /no datagram socket/ || e.message =~ /no acceptor/ # the port is in use
-                    print_error "[DNS] Another process is already listening on port #{options[:listen]}"
-                    print_error "Exiting..."
-                    exit 127
-                  else
-                    raise
+                  # super(:listen => listen)
+                  Thread.new { super() }
+                  rescue RuntimeError => e
+                    if e.message =~ /no datagram socket/ || e.message =~ /no acceptor/ # the port is in use
+                      print_error "[DNS] Another process is already listening on port #{options[:listen]}"
+                      print_error "Exiting..."
+                      exit 127
+                    else
+                      raise
+                    end
                   end
-                end
 
-              end
+
+                end
             end
           end
         end
@@ -149,7 +164,10 @@ module BeEF
         # @param transaction [RubyDNS::Transaction] internal RubyDNS class detailing DNS question/answer
         def process(name, resource, transaction)
           @lock.synchronize do
-	        print_debug "Received DNS request (name: #{name} type: #{format_resource(resource)})"
+
+            resource = resource.to_s
+
+	          print_debug "Received DNS request (name: #{name} type: #{format_resource(resource)})"
 
             # no need to parse AAAA resources when data is extruded from client. Also we check if the FQDN starts with the 0xb3 string.
             # this 0xb3 is convenient to clearly separate DNS requests used to extrude data from normal DNS requests than should be resolved by the DNS server.
@@ -163,7 +181,7 @@ module BeEF
 
             catch (:done) do
               # Find rules matching the requested resource class
-              resources = @database.all(:resource => resource)
+              resources = @database.where(:resource => resource)
               throw :done if resources.length == 0
 
               # Narrow down search by finding a matching pattern
@@ -259,7 +277,7 @@ module BeEF
         #
         # @return [String] resource name stripped of any module/class names
         def format_resource(resource)
-          /::(\w+)$/.match(resource.name)[1]
+          /::(\w+)$/.match(resource)[1]
         end
 
       end
